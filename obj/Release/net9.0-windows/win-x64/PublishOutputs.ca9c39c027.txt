@@ -1,0 +1,2 @@
+C:\xampp\htdocs\TremauxLock\bin\Release\net9.0-windows\win-x64\publish\TremauxLocker.pdb
+C:\xampp\htdocs\TremauxLock\bin\Release\net9.0-windows\win-x64\publish\TremauxLocker.exe

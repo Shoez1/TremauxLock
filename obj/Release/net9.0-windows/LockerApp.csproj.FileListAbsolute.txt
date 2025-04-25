@@ -1,0 +1,14 @@
+C:\xampp\htdocs\lock\LockerApp\obj\Release\net9.0-windows\LockerApp.GeneratedMSBuildEditorConfig.editorconfig
+C:\xampp\htdocs\lock\LockerApp\obj\Release\net9.0-windows\LockerApp.AssemblyInfoInputs.cache
+C:\xampp\htdocs\lock\LockerApp\obj\Release\net9.0-windows\LockerApp.AssemblyInfo.cs
+C:\xampp\htdocs\lock\LockerApp\obj\Release\net9.0-windows\LockerApp.csproj.CoreCompileInputs.cache
+C:\xampp\htdocs\lock\LockerApp\bin\Release\net9.0-windows\LockerApp.exe
+C:\xampp\htdocs\lock\LockerApp\bin\Release\net9.0-windows\LockerApp.deps.json
+C:\xampp\htdocs\lock\LockerApp\bin\Release\net9.0-windows\LockerApp.runtimeconfig.json
+C:\xampp\htdocs\lock\LockerApp\bin\Release\net9.0-windows\LockerApp.dll
+C:\xampp\htdocs\lock\LockerApp\bin\Release\net9.0-windows\LockerApp.pdb
+C:\xampp\htdocs\lock\LockerApp\obj\Release\net9.0-windows\LockerApp.dll
+C:\xampp\htdocs\lock\LockerApp\obj\Release\net9.0-windows\refint\LockerApp.dll
+C:\xampp\htdocs\lock\LockerApp\obj\Release\net9.0-windows\LockerApp.pdb
+C:\xampp\htdocs\lock\LockerApp\obj\Release\net9.0-windows\LockerApp.genruntimeconfig.cache
+C:\xampp\htdocs\lock\LockerApp\obj\Release\net9.0-windows\ref\LockerApp.dll

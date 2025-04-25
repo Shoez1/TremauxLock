@@ -1,0 +1,2 @@
+C:\xampp\htdocs\lock\bin\Release\net9.0-windows\win-x64\publish\LockerApp.pdb
+C:\xampp\htdocs\lock\bin\Release\net9.0-windows\win-x64\publish\LockerApp.exe
