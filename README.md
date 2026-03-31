@@ -1,52 +1,58 @@
 # TremauxLock
- 
 
-![screenshot](https://user-images.githubusercontent.com/placeholder/lockerapp-dark.png)
+TremauxLock foi reescrito como um cofre local recuperavel para Windows. Em vez de esconder a pasta com ACL e atributo de sistema, ele agora protege os arquivos com criptografia autenticada e fluxo de recuperacao.
 
-**TremauxLock** é um utilitário Windows para bloquear/desbloquear uma pasta privada com senha, proteção visual e tema escuro estilo hacker. Ideal para proteger arquivos pessoais de forma simples, portátil e visualmente estilosa.
+## O que mudou
 
-## Recursos
-- Cria automaticamente uma pasta `private` ao lado do executável.
-- Bloqueia e oculta a pasta, protegendo por senha (hash seguro SHA-256).
-- Permissões de acesso negadas ao grupo Everyone enquanto bloqueada.
-- Interface moderna, dark, "hacker" (verde suave sobre preto, fonte monoespaçada).
-- Ícone ladybug embutido no executável e na janela.
-- 100% portátil: basta levar apenas o `TremauxLock.exe`.
+- O bloqueio antigo por permissao e ocultacao foi removido.
+- A pasta `private` passa a ser criptografada de verdade em `private.locked`.
+- `private.locked` e `private.vault.json` ficam ocultos enquanto o cofre estiver bloqueado.
+- Cada arquivo usa `AES-GCM` com nonce aleatorio e validacao de integridade.
+- A senha protege uma chave mestra aleatoria usando `PBKDF2-SHA256`.
+- Cada bloqueio gera uma chave de recuperacao separada.
+- O desbloqueio aceita senha ou chave de recuperacao.
+- Cinco tentativas invalidas seguidas ativam uma pausa temporaria.
+- A interface foi redesenhada com visual moderno e foco em clareza operacional.
 
-## Como usar
-1. **Primeira execução:**
-   - Rode o `TremauxLock.exe`.
-   - A pasta `private` será criada automaticamente.
-   - Coloque os arquivos que deseja proteger dentro da pasta `private`.
-2. **Bloquear:**
-   - Clique em "Bloquear pasta".
-   - Defina e confirme uma senha.
-   - A pasta será ocultada e protegida.
-3. **Desbloquear:**
-   - Clique em "Desbloquear pasta".
-   - Digite a senha correta.
-   - A pasta será restaurada e o acesso liberado.
+## Estrutura do cofre
 
-## Compilação
-Necessário [.NET 6/7/8 SDK](https://dotnet.microsoft.com/download/dotnet) instalado.
+- `private`
+  Pasta de trabalho em claro quando o cofre esta desbloqueado.
+- `private.locked`
+  Conteudo criptografado do cofre.
+- `private.vault.json`
+  Metadados do cofre, incluindo salts e chaves mestras protegidas.
 
-```sh
-# Clone o repositório e navegue até a pasta LockerApp
-cd LockerApp
-# Compile e gere um executável único
- dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeAllContentForSelfExtract=true
+## Fluxo de uso
+
+1. Rode o `TremauxLock.exe`.
+2. Coloque os arquivos desejados dentro de `private`.
+3. Clique em `Bloquear cofre` e defina a senha.
+4. Guarde a chave de recuperacao exibida pelo app.
+5. Para restaurar os arquivos, use `Desbloquear com senha` ou `Usar chave de recuperacao`.
+
+## Build rapido
+
+Na raiz do projeto:
+
+```bat
+build-exe.bat
 ```
-O executável estará em `bin/Release/netX.X-windows/win-x64/publish/TremauxLock.exe`.
 
-## Personalização
-- Para trocar o ícone, substitua `ladybug.ico` no projeto.
-- Para alterar o tema, edite as cores no código fonte em `Program.cs`.
+Saida esperada:
 
-## Avisos
-- Execute como administrador para garantir alteração de permissões.
-- Se esquecer a senha, não há como recuperar o acesso pelos meios normais.
-- O app é destinado a proteção casual/local, não para dados ultra-sensíveis.
+`bin\Release\net9.0-windows\win-x64\publish\TremauxLock.exe`
 
----
+## Build manual
 
-**by Shoez3 - Hacker Edition**
+```powershell
+dotnet restore -r win-x64
+dotnet publish .\LockerApp.csproj -c Release -r win-x64 --self-contained true --no-restore /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true /p:DebugType=None /p:DebugSymbols=false
+```
+
+## Observacoes de seguranca
+
+- O projeto foi desenhado para ser recuperavel. Ele nao tenta criar bloqueio irreversivel.
+- A chave de recuperacao precisa ser guardada fora da pasta do app.
+- A remocao de arquivos em claro usa exclusao normal do sistema, nao limpeza criptografica do disco.
+- Arquivos muito grandes ainda sao processados em memoria durante a criptografia e descriptografia.

@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\xampp\\htdocs\\TremauxLock\\LockerApp.csproj": {}
+    "X:\\Projetos\\TremauxLock\\LockerApp.csproj": {}
   },
   "projects": {
-    "C:\\xampp\\htdocs\\TremauxLock\\LockerApp.csproj": {
+    "X:\\Projetos\\TremauxLock\\LockerApp.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\xampp\\htdocs\\TremauxLock\\LockerApp.csproj",
-        "projectName": "TremauxLocker",
-        "projectPath": "C:\\xampp\\htdocs\\TremauxLock\\LockerApp.csproj",
-        "packagesPath": "C:\\Users\\User\\.nuget\\packages\\",
-        "outputPath": "C:\\xampp\\htdocs\\TremauxLock\\obj\\",
+        "projectUniqueName": "X:\\Projetos\\TremauxLock\\LockerApp.csproj",
+        "projectName": "TremauxLock",
+        "projectPath": "X:\\Projetos\\TremauxLock\\LockerApp.csproj",
+        "packagesPath": "C:\\Users\\Matheus\\.nuget\\packages\\",
+        "outputPath": "X:\\Projetos\\TremauxLock\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\User\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\Matheus\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0-windows"
@@ -38,23 +38,11 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.200"
+        "SdkAnalysisLevel": "10.0.200"
       },
       "frameworks": {
         "net9.0-windows7.0": {
           "targetAlias": "net9.0-windows",
-          "dependencies": {
-            "Microsoft.NET.ILLink.Tasks": {
-              "suppressParent": "All",
-              "target": "Package",
-              "version": "[9.0.4, )",
-              "autoReferenced": true
-            },
-            "System.IO.FileSystem.AccessControl": {
-              "target": "Package",
-              "version": "[5.0.0, )"
-            }
-          },
           "imports": [
             "net461",
             "net462",
@@ -68,16 +56,32 @@
           "warn": true,
           "downloadDependencies": [
             {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[9.0.14, 9.0.14]"
+            },
+            {
               "name": "Microsoft.AspNetCore.App.Runtime.win-x64",
-              "version": "[9.0.4, 9.0.4]"
+              "version": "[9.0.14, 9.0.14]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.win-x64",
+              "version": "[9.0.14, 9.0.14]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[9.0.14, 9.0.14]"
             },
             {
               "name": "Microsoft.NETCore.App.Runtime.win-x64",
-              "version": "[9.0.4, 9.0.4]"
+              "version": "[9.0.14, 9.0.14]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[9.0.14, 9.0.14]"
             },
             {
               "name": "Microsoft.WindowsDesktop.App.Runtime.win-x64",
-              "version": "[9.0.4, 9.0.4]"
+              "version": "[9.0.14, 9.0.14]"
             }
           ],
           "frameworkReferences": {
@@ -88,7 +92,7 @@
               "privateAssets": "none"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.201/PortableRuntimeIdentifierGraph.json"
         }
       },
       "runtimes": {

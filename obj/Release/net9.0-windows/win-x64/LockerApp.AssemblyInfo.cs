@@ -10,12 +10,12 @@
 using System;
 using System.Reflection;
 
-[assembly: System.Reflection.AssemblyCompanyAttribute("TremauxLocker")]
+[assembly: System.Reflection.AssemblyCompanyAttribute("TremauxLock")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
-[assembly: System.Reflection.AssemblyProductAttribute("TremauxLocker")]
-[assembly: System.Reflection.AssemblyTitleAttribute("TremauxLocker")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+25413bf8d31ed4cb77ced42a3fb5a6f22ea10faf")]
+[assembly: System.Reflection.AssemblyProductAttribute("TremauxLock")]
+[assembly: System.Reflection.AssemblyTitleAttribute("TremauxLock")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
 [assembly: System.Runtime.Versioning.TargetPlatformAttribute("Windows7.0")]
 [assembly: System.Runtime.Versioning.SupportedOSPlatformAttribute("Windows7.0")]

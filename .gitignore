@@ -1,0 +1,4 @@
+bin/
+obj/
+*.user
+*.vault-recovery.txt
