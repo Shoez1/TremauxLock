@@ -1,142 +1,166 @@
 using System;
 using System.Drawing;
 using System.IO;
+using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Threading.Tasks;
 using System.Windows.Forms;
+using Microsoft.Web.WebView2.Core;
+using Microsoft.Web.WebView2.WinForms;
 
 namespace TremauxLock
 {
     internal sealed class RecoveryKeyDialog : Form
     {
-        private readonly Panel shellPanel;
-        private readonly Panel keyPanel;
-        private readonly TextBox txtRecoveryKey;
-        private readonly Label lblHint;
-        private readonly AccentButton btnCopy;
-        private readonly AccentButton btnSave;
-        private readonly AccentButton btnClose;
+        [DllImport("user32.dll")]
+        private static extern bool ReleaseCapture();
+
+        [DllImport("user32.dll")]
+        private static extern int SendMessage(IntPtr hWnd, int msg, int wParam, int lParam);
+
+        private const int WM_NCLBUTTONDOWN = 0xA1;
+        private const int HT_CAPTION = 2;
+
+        private readonly string recoveryKey;
+        private readonly int fileCount;
+        private readonly long totalBytes;
+        private readonly string? backupWarning;
+        private readonly WebView2 webView;
+        private readonly Panel splashPanel;
+        private readonly Label lblSplash;
+        private bool webViewReady;
 
         public RecoveryKeyDialog(string recoveryKey, int fileCount, long totalBytes, string? backupWarning)
         {
+            this.recoveryKey = recoveryKey;
+            this.fileCount = fileCount;
+            this.totalBytes = totalBytes;
+            this.backupWarning = backupWarning;
+
             Text = "Chave de recuperacao";
-            Width = 560;
-            Height = 340;
+            ClientSize = new Size(680, 460);
             StartPosition = FormStartPosition.CenterParent;
-            FormBorderStyle = FormBorderStyle.FixedDialog;
+            FormBorderStyle = FormBorderStyle.None;
             ShowInTaskbar = false;
             MinimizeBox = false;
             MaximizeBox = false;
-            BackColor = Color.FromArgb(11, 16, 27);
+            DoubleBuffered = true;
+            BackColor = AppTheme.BackgroundPrimary;
             ForeColor = AppTheme.TextPrimary;
             Font = AppTheme.CreateBodyFont(9.5f);
+            KeyPreview = true;
 
-            shellPanel = CreateBorderPanel(Color.FromArgb(15, 22, 35), Color.FromArgb(38, 52, 72));
-
-            Label lblEyebrow = CreateLabel("RECOVERY KEY", 8.25f, FontStyle.Bold, AppTheme.AccentSoft, shellPanel.BackColor);
-            Label lblTitle = CreateLabel("Guarde esta chave antes de fechar", 14.5f, FontStyle.Regular, AppTheme.TextPrimary, shellPanel.BackColor);
-            Label lblSummary = CreateLabel(
-                $"{fileCount} arquivo(s) foram protegidos, totalizando {VaultCrypto.FormatSize(totalBytes)}.",
-                9f,
-                FontStyle.Regular,
-                AppTheme.TextSecondary,
-                shellPanel.BackColor);
-
-            lblTitle.Font = AppTheme.CreateTitleFont(14.5f);
-
-            keyPanel = CreateBorderPanel(Color.FromArgb(12, 19, 30), Color.FromArgb(42, 56, 77));
-
-            txtRecoveryKey = new TextBox
+            webView = new WebView2
             {
-                BorderStyle = BorderStyle.None,
-                ReadOnly = true,
-                Multiline = false,
-                BackColor = keyPanel.BackColor,
-                ForeColor = AppTheme.TextPrimary,
-                Font = AppTheme.CreateCodeFont(11f, FontStyle.Bold),
-                Text = recoveryKey
+                Dock = DockStyle.Fill,
+                Visible = false,
+                AllowExternalDrop = false,
+                DefaultBackgroundColor = AppTheme.BackgroundPrimary
             };
 
-            keyPanel.Controls.Add(txtRecoveryKey);
-
-            lblHint = CreateLabel(
-                backupWarning ?? "Salve a chave fora desta pasta para nao depender do executavel atual.",
-                8.75f,
-                FontStyle.Regular,
-                backupWarning == null ? AppTheme.TextSoft : AppTheme.Warning,
-                shellPanel.BackColor);
-            lblHint.AutoEllipsis = true;
-
-            btnCopy = new AccentButton
+            splashPanel = new Panel
             {
-                Text = "Copiar chave",
-                Width = 132,
-                Height = 36,
-                ButtonStyle = AccentButtonStyle.Primary
-            };
-            btnCopy.Click += (_, _) =>
-            {
-                Clipboard.SetText(txtRecoveryKey.Text);
-                MessageBox.Show("Chave copiada para a area de transferencia.", "TremauxLock", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Dock = DockStyle.Fill,
+                BackColor = AppTheme.BackgroundPrimary
             };
 
-            btnSave = new AccentButton
+            lblSplash = new Label
             {
-                Text = "Salvar arquivo",
-                Width = 138,
-                Height = 36,
-                ButtonStyle = AccentButtonStyle.Secondary
-            };
-            btnSave.Click += (_, _) => SaveRecoveryKey();
-
-            btnClose = new AccentButton
-            {
-                Text = "Fechar",
-                Width = 112,
-                Height = 36,
-                ButtonStyle = AccentButtonStyle.Secondary,
-                DialogResult = DialogResult.OK
+                Dock = DockStyle.Fill,
+                Text = "Carregando...",
+                TextAlign = ContentAlignment.MiddleCenter,
+                ForeColor = AppTheme.TextSecondary,
+                BackColor = AppTheme.BackgroundPrimary,
+                Font = AppTheme.CreateBodyFont(10f)
             };
 
-            shellPanel.Controls.Add(lblEyebrow);
-            shellPanel.Controls.Add(lblTitle);
-            shellPanel.Controls.Add(lblSummary);
-            shellPanel.Controls.Add(keyPanel);
-            shellPanel.Controls.Add(lblHint);
-            shellPanel.Controls.Add(btnCopy);
-            shellPanel.Controls.Add(btnSave);
-            shellPanel.Controls.Add(btnClose);
+            splashPanel.Controls.Add(lblSplash);
+            Controls.Add(webView);
+            Controls.Add(splashPanel);
 
-            Controls.Add(shellPanel);
-
-            Resize += (_, _) =>
+            Paint += (_, e) =>
             {
-                shellPanel.SetBounds(18, 18, ClientSize.Width - 36, ClientSize.Height - 36);
-
-                int inset = 18;
-                int contentWidth = shellPanel.Width - (inset * 2);
-
-                lblEyebrow.SetBounds(inset, 16, contentWidth, 14);
-                lblTitle.SetBounds(inset, 34, contentWidth, 24);
-                lblSummary.SetBounds(inset, 62, contentWidth, 18);
-                keyPanel.SetBounds(inset, 92, contentWidth, 54);
-                txtRecoveryKey.SetBounds(12, 18, keyPanel.Width - 24, 18);
-                lblHint.SetBounds(inset, 156, contentWidth, 34);
-
-                int buttonTop = shellPanel.Height - 54;
-                btnClose.SetBounds(shellPanel.Width - inset - btnClose.Width, buttonTop, btnClose.Width, btnClose.Height);
-                btnSave.SetBounds(btnClose.Left - 8 - btnSave.Width, buttonTop, btnSave.Width, btnSave.Height);
-                btnCopy.SetBounds(btnSave.Left - 8 - btnCopy.Width, buttonTop, btnCopy.Width, btnCopy.Height);
+                using var pen = new Pen(AppTheme.Border, 1f);
+                e.Graphics.DrawRectangle(pen, 0, 0, Math.Max(0, Width - 1), Math.Max(0, Height - 1));
             };
 
-            Shown += (_, _) =>
-            {
-                txtRecoveryKey.Focus();
-                txtRecoveryKey.SelectAll();
-            };
-
-            OnResize(EventArgs.Empty);
+            Shown += async (_, _) => await EnsureWebViewAsync();
+            KeyDown += OnDialogKeyDown;
         }
 
-        private void SaveRecoveryKey()
+        private async Task EnsureWebViewAsync()
+        {
+            if (webViewReady)
+            {
+                return;
+            }
+
+            try
+            {
+                await webView.EnsureCoreWebView2Async();
+
+                CoreWebView2Settings settings = webView.CoreWebView2.Settings;
+                settings.AreDefaultContextMenusEnabled = false;
+                settings.AreDevToolsEnabled = false;
+                settings.AreBrowserAcceleratorKeysEnabled = true;
+                settings.IsStatusBarEnabled = false;
+                settings.IsZoomControlEnabled = false;
+
+                webView.CoreWebView2.WebMessageReceived += OnWebMessageReceived;
+                webView.NavigateToString(DialogHtmlBuilder.BuildRecovery(recoveryKey, fileCount, totalBytes, backupWarning));
+                webViewReady = true;
+                splashPanel.Visible = false;
+                webView.Visible = true;
+            }
+            catch (Exception ex)
+            {
+                lblSplash.Text = "Falha ao carregar.";
+                MessageBox.Show(
+                    "Nao foi possivel abrir esta tela.\n\n" + ex.Message,
+                    "TremauxLock",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                DialogResult = DialogResult.OK;
+                Close();
+            }
+        }
+
+        private async void OnWebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
+        {
+            string action;
+            try
+            {
+                action = e.TryGetWebMessageAsString();
+            }
+            catch
+            {
+                return;
+            }
+
+            switch (action)
+            {
+                case "drag-window":
+                    ReleaseCapture();
+                    SendMessage(Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
+                    break;
+
+                case "copy":
+                    Clipboard.SetText(recoveryKey);
+                    await ApplyNoticeAsync("Chave copiada para a area de transferencia.", false);
+                    break;
+
+                case "save":
+                    await SaveRecoveryKeyAsync();
+                    break;
+
+                case "close":
+                    DialogResult = DialogResult.OK;
+                    Close();
+                    break;
+            }
+        }
+
+        private async Task SaveRecoveryKeyAsync()
         {
             using var dialog = new SaveFileDialog
             {
@@ -150,46 +174,48 @@ namespace TremauxLock
                 return;
             }
 
-            string content = $"""
-            TremauxLock - Chave de recuperacao
-            Gerada em: {DateTime.Now:yyyy-MM-dd HH:mm:ss}
+            try
+            {
+                string content = $"""
+                TremauxLock - Chave de recuperacao
+                Gerada em: {DateTime.Now:yyyy-MM-dd HH:mm:ss}
 
-            Chave:
-            {txtRecoveryKey.Text}
+                Chave:
+                {recoveryKey}
 
-            Guarde este arquivo em local seguro.
-            """;
+                Guarde este arquivo em local seguro.
+                """;
 
-            File.WriteAllText(dialog.FileName, content);
-            MessageBox.Show("Chave salva com sucesso.", "TremauxLock", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                File.WriteAllText(dialog.FileName, content);
+                await ApplyNoticeAsync("Chave salva com sucesso.", false);
+            }
+            catch (Exception ex)
+            {
+                await ApplyNoticeAsync(ex.Message, true);
+            }
         }
 
-        private static Panel CreateBorderPanel(Color backColor, Color borderColor)
+        private async Task ApplyNoticeAsync(string message, bool warning)
         {
-            Panel panel = new Panel
+            if (!webViewReady || webView.CoreWebView2 == null)
             {
-                BackColor = backColor
-            };
+                MessageBox.Show(message, "TremauxLock", MessageBoxButtons.OK, warning ? MessageBoxIcon.Warning : MessageBoxIcon.Information);
+                return;
+            }
 
-            panel.Paint += (_, e) =>
-            {
-                using var pen = new Pen(borderColor, 1f);
-                e.Graphics.DrawRectangle(pen, 0, 0, Math.Max(0, panel.Width - 1), Math.Max(0, panel.Height - 1));
-            };
-
-            return panel;
+            string script = $"window.applyRecoveryNotice({JsonSerializer.Serialize(message)}, {(warning ? "true" : "false")});";
+            await webView.CoreWebView2.ExecuteScriptAsync(script);
         }
 
-        private static Label CreateLabel(string text, float size, FontStyle style, Color color, Color backColor)
+        private void OnDialogKeyDown(object? sender, KeyEventArgs e)
         {
-            return new Label
+            if (e.KeyCode != Keys.Escape)
             {
-                AutoSize = false,
-                BackColor = backColor,
-                Text = text,
-                ForeColor = color,
-                Font = AppTheme.CreateBodyFont(size, style)
-            };
+                return;
+            }
+
+            DialogResult = DialogResult.OK;
+            Close();
         }
     }
 }

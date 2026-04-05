@@ -844,6 +844,7 @@ X:\Projetos\TremauxLock\obj\Release\net9.0-windows\win-x64\TremauxLock.dll
 X:\Projetos\TremauxLock\obj\Release\net9.0-windows\win-x64\refint\TremauxLock.dll
 X:\Projetos\TremauxLock\obj\Release\net9.0-windows\win-x64\LockerApp.genruntimeconfig.cache
 X:\Projetos\TremauxLock\obj\Release\net9.0-windows\win-x64\ref\TremauxLock.dll
+X:\Projetos\TremauxLock\obj\Release\net9.0-windows\win-x64\LockerApp.csproj.Up2Date
 X:\Projetos\TremauxLock\bin\Release\net9.0-windows\win-x64\Microsoft.CSharp.dll
 X:\Projetos\TremauxLock\bin\Release\net9.0-windows\win-x64\Microsoft.VisualBasic.Core.dll
 X:\Projetos\TremauxLock\bin\Release\net9.0-windows\win-x64\Microsoft.Win32.Primitives.dll
@@ -1107,4 +1108,3 @@ X:\Projetos\TremauxLock\bin\Release\net9.0-windows\win-x64\zh-Hant\Microsoft.Vis
 X:\Projetos\TremauxLock\bin\Release\net9.0-windows\win-x64\zh-Hant\System.Windows.Forms.Design.resources.dll
 X:\Projetos\TremauxLock\bin\Release\net9.0-windows\win-x64\zh-Hant\System.Windows.Forms.Primitives.resources.dll
 X:\Projetos\TremauxLock\bin\Release\net9.0-windows\win-x64\zh-Hant\System.Windows.Forms.resources.dll
-X:\Projetos\TremauxLock\obj\Release\net9.0-windows\win-x64\LockerApp.csproj.Up2Date

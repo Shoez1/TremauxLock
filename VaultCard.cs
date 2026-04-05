@@ -4,12 +4,12 @@ namespace TremauxLock
     {
         public VaultCard()
         {
-            FillColor = AppTheme.CardFill;
-            SecondaryFillColor = AppTheme.CardFill;
-            BorderColor = AppTheme.CardBorder;
-            InnerStrokeColor = AppTheme.WithAlpha(System.Drawing.Color.White, 10);
+            FillColor = AppTheme.Surface;
+            SecondaryFillColor = AppTheme.Surface;
+            BorderColor = AppTheme.Border;
+            InnerStrokeColor = System.Drawing.Color.FromArgb(10, 255, 255, 255);
             CornerRadius = AppTheme.RadiusCard;
-            BorderThickness = 1.2f;
+            BorderThickness = 1f;
         }
     }
 }

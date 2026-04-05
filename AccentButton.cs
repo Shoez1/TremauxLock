@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
 namespace TremauxLock
@@ -9,7 +10,8 @@ namespace TremauxLock
     {
         Primary,
         Secondary,
-        Ghost
+        Ghost,
+        Danger
     }
 
     internal sealed class AccentButton : Button
@@ -20,17 +22,27 @@ namespace TremauxLock
 
         public AccentButton()
         {
+            SetStyle(
+                ControlStyles.AllPaintingInWmPaint |
+                ControlStyles.OptimizedDoubleBuffer |
+                ControlStyles.ResizeRedraw |
+                ControlStyles.UserPaint,
+                true);
+
+            DoubleBuffered = true;
             FlatStyle = FlatStyle.Flat;
-            FlatAppearance.BorderSize = 1;
+            FlatAppearance.BorderSize = 0;
             UseVisualStyleBackColor = false;
             Cursor = Cursors.Hand;
-            Font = AppTheme.CreateBodyFont(9f, FontStyle.Bold);
+            Font = AppTheme.CreateBodyFont(9f, FontStyle.Regular);
             Height = 38;
-            Width = 156;
-            Padding = new Padding(14, 0, 14, 0);
+            Width = 148;
+            Padding = new Padding(16, 0, 16, 0);
             TextAlign = ContentAlignment.MiddleCenter;
             AutoEllipsis = true;
-            ApplyPalette();
+            UseMnemonic = false;
+            BackColor = AppTheme.Surface;
+            ForeColor = AppTheme.TextPrimary;
         }
 
         protected override bool ShowFocusCues => false;
@@ -43,144 +55,83 @@ namespace TremauxLock
             set
             {
                 buttonStyle = value;
-                ApplyPalette();
+                Invalidate();
             }
         }
 
-        protected override void OnCreateControl()
+        protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); hovered = true; Invalidate(); }
+        protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); hovered = false; pressed = false; Invalidate(); }
+        protected override void OnMouseDown(MouseEventArgs e) { base.OnMouseDown(e); if (e.Button == MouseButtons.Left) { pressed = true; Invalidate(); } }
+        protected override void OnMouseUp(MouseEventArgs e) { base.OnMouseUp(e); pressed = false; Invalidate(); }
+        protected override void OnEnabledChanged(EventArgs e) { base.OnEnabledChanged(e); Invalidate(); }
+
+        protected override void OnPaint(PaintEventArgs e)
         {
-            base.OnCreateControl();
-            ApplyPalette();
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            e.Graphics.Clear(Parent?.BackColor ?? AppTheme.BackgroundPrimary);
+
+            RectangleF bounds = new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f);
+            var palette = ResolvePalette();
+
+            using var path = AppTheme.CreateRoundedRectangle(bounds, AppTheme.RadiusButton);
+            using var fillBrush = new SolidBrush(palette.Back);
+            using var borderPen = new Pen(palette.Border, 1f);
+            e.Graphics.FillPath(fillBrush, path);
+            e.Graphics.DrawPath(borderPen, path);
+
+            Rectangle textRect = new Rectangle(14, 0, Math.Max(0, Width - 28), Height);
+            TextRenderer.DrawText(
+                e.Graphics,
+                Text,
+                Font,
+                textRect,
+                palette.Fore,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine);
         }
 
-        protected override void OnEnabledChanged(EventArgs e)
-        {
-            base.OnEnabledChanged(e);
-            ApplyPalette();
-        }
-
-        protected override void OnMouseEnter(EventArgs e)
-        {
-            base.OnMouseEnter(e);
-            hovered = true;
-            ApplyPalette();
-        }
-
-        protected override void OnMouseLeave(EventArgs e)
-        {
-            base.OnMouseLeave(e);
-            hovered = false;
-            pressed = false;
-            ApplyPalette();
-        }
-
-        protected override void OnMouseDown(MouseEventArgs mevent)
-        {
-            base.OnMouseDown(mevent);
-            if (mevent.Button == MouseButtons.Left)
-            {
-                pressed = true;
-                ApplyPalette();
-            }
-        }
-
-        protected override void OnMouseUp(MouseEventArgs mevent)
-        {
-            base.OnMouseUp(mevent);
-            pressed = false;
-            ApplyPalette();
-        }
-
-        private void ApplyPalette()
-        {
-            (Color backColor, Color borderColor, Color textColor) = ResolvePalette();
-
-            BackColor = backColor;
-            ForeColor = textColor;
-            FlatAppearance.BorderColor = borderColor;
-            FlatAppearance.MouseOverBackColor = backColor;
-            FlatAppearance.MouseDownBackColor = backColor;
-            Cursor = Enabled ? Cursors.Hand : Cursors.Default;
-        }
-
-        private (Color BackColor, Color BorderColor, Color TextColor) ResolvePalette()
+        private (Color Back, Color Border, Color Fore) ResolvePalette()
         {
             if (!Enabled)
             {
-                return (
-                    Color.FromArgb(29, 38, 52),
-                    Color.FromArgb(46, 58, 76),
-                    AppTheme.TextSoft);
+                return (Color.FromArgb(20, 24, 31), AppTheme.Border, AppTheme.TextSoft);
             }
 
-            if (ButtonStyle == AccentButtonStyle.Primary)
+            return ButtonStyle switch
             {
-                if (pressed)
-                {
-                    return (
-                        Color.FromArgb(41, 145, 134),
-                        Color.FromArgb(57, 163, 151),
-                        AppTheme.TextPrimary);
-                }
+                AccentButtonStyle.Primary => ResolvePrimary(),
+                AccentButtonStyle.Danger => ResolveDanger(),
+                AccentButtonStyle.Secondary => ResolveSecondary(),
+                _ => ResolveGhost()
+            };
+        }
 
-                if (hovered)
-                {
-                    return (
-                        Color.FromArgb(53, 164, 152),
-                        Color.FromArgb(69, 181, 168),
-                        AppTheme.TextPrimary);
-                }
+        private (Color Back, Color Border, Color Fore) ResolvePrimary()
+        {
+            if (pressed) return (Color.FromArgb(38, 97, 177), Color.FromArgb(90, 114, 197, 255), Color.White);
+            if (hovered) return (Color.FromArgb(42, 104, 188), Color.FromArgb(102, 114, 197, 255), Color.White);
+            return (Color.FromArgb(34, 93, 170), Color.FromArgb(92, 114, 197, 255), Color.White);
+        }
 
-                return (
-                    Color.FromArgb(47, 154, 143),
-                    Color.FromArgb(61, 170, 158),
-                    AppTheme.TextPrimary);
-            }
+        private (Color Back, Color Border, Color Fore) ResolveDanger()
+        {
+            if (pressed) return (Color.FromArgb(74, 39, 42), Color.FromArgb(136, 248, 81, 73), AppTheme.Danger);
+            if (hovered) return (Color.FromArgb(64, 35, 38), Color.FromArgb(118, 248, 81, 73), AppTheme.Danger);
+            return (Color.FromArgb(56, 31, 33), Color.FromArgb(104, 248, 81, 73), AppTheme.Danger);
+        }
 
-            if (ButtonStyle == AccentButtonStyle.Secondary)
-            {
-                if (pressed)
-                {
-                    return (
-                        Color.FromArgb(19, 27, 40),
-                        Color.FromArgb(58, 71, 91),
-                        AppTheme.TextPrimary);
-                }
+        private (Color Back, Color Border, Color Fore) ResolveSecondary()
+        {
+            if (pressed) return (Color.FromArgb(28, 34, 42), AppTheme.BorderMid, AppTheme.TextPrimary);
+            if (hovered) return (Color.FromArgb(25, 31, 39), AppTheme.BorderMid, AppTheme.TextPrimary);
+            return (Color.FromArgb(22, 27, 34), AppTheme.Border, AppTheme.TextPrimary);
+        }
 
-                if (hovered)
-                {
-                    return (
-                        Color.FromArgb(24, 33, 48),
-                        Color.FromArgb(74, 90, 113),
-                        AppTheme.TextPrimary);
-                }
-
-                return (
-                    Color.FromArgb(21, 29, 43),
-                    Color.FromArgb(60, 74, 94),
-                    AppTheme.TextPrimary);
-            }
-
-            if (pressed)
-            {
-                return (
-                    Color.FromArgb(16, 23, 35),
-                    Color.FromArgb(48, 60, 79),
-                    AppTheme.TextSecondary);
-            }
-
-            if (hovered)
-            {
-                return (
-                    Color.FromArgb(20, 29, 43),
-                    Color.FromArgb(60, 74, 94),
-                    AppTheme.TextPrimary);
-            }
-
-            return (
-                Color.FromArgb(18, 26, 38),
-                Color.FromArgb(45, 58, 76),
-                AppTheme.TextSecondary);
+        private (Color Back, Color Border, Color Fore) ResolveGhost()
+        {
+            if (pressed) return (Color.FromArgb(18, 88, 166, 255), Color.FromArgb(92, 88, 166, 255), AppTheme.AccentBlue);
+            if (hovered) return (Color.FromArgb(14, 88, 166, 255), Color.FromArgb(82, 88, 166, 255), AppTheme.AccentBlue);
+            return (Color.FromArgb(0, 0, 0, 0), AppTheme.BorderMid, AppTheme.TextSecondary);
         }
     }
 }

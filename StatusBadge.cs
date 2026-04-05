@@ -10,72 +10,65 @@ namespace TremauxLock
         public StatusBadge()
         {
             SetStyle(
-                ControlStyles.AllPaintingInWmPaint
-                | ControlStyles.OptimizedDoubleBuffer
-                | ControlStyles.ResizeRedraw
-                | ControlStyles.UserPaint,
+                ControlStyles.AllPaintingInWmPaint |
+                ControlStyles.OptimizedDoubleBuffer |
+                ControlStyles.ResizeRedraw |
+                ControlStyles.UserPaint,
                 true);
+
             DoubleBuffered = true;
-            Size = new Size(124, 32);
-            ForeColor = AppTheme.TextPrimary;
-            Font = AppTheme.CreateBodyFont(8.75f, FontStyle.Bold);
-            BackColor = AppTheme.CardFill;
-            Resize += (_, _) => UpdateRegion();
-            UpdateRegion();
+            Size = new Size(138, 30);
+            ForeColor = AppTheme.AccentGreen;
+            Font = AppTheme.CreateCodeFont(8.25f, FontStyle.Bold);
+            BackColor = AppTheme.Surface;
         }
 
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public Color FillColor { get; set; } = AppTheme.BadgeFill;
+        public Color FillColor { get; set; } = Color.FromArgb(25, 63, 185, 80);
 
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public Color BorderColor { get; set; } = AppTheme.BadgeBorder;
+        public Color BorderColor { get; set; } = Color.FromArgb(64, 63, 185, 80);
 
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public int CornerRadius { get; set; } = AppTheme.RadiusBadge;
+        public bool ShowDot { get; set; } = true;
 
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
+            if (Width <= 1 || Height <= 1) return;
 
-            if (Width <= 1 || Height <= 1)
-            {
-                return;
-            }
-
-            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
-            e.Graphics.CompositingQuality = CompositingQuality.HighQuality;
+            var g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.PixelOffsetMode = PixelOffsetMode.HighQuality;
 
             RectangleF bounds = new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f);
-            using GraphicsPath path = AppTheme.CreateRoundedRectangle(bounds, CornerRadius);
-            using SolidBrush fillBrush = new SolidBrush(FillColor);
-            using Pen borderPen = new Pen(BorderColor, 1f);
+            using var path = AppTheme.CreateRoundedRectangle(bounds, AppTheme.RadiusBadge);
+            using var fillBrush = new SolidBrush(FillColor);
+            using var borderPen = new Pen(BorderColor, 1f);
+            g.FillPath(fillBrush, path);
+            g.DrawPath(borderPen, path);
 
-            e.Graphics.FillPath(fillBrush, path);
-            e.Graphics.DrawPath(borderPen, path);
-
-            TextRenderer.DrawText(
-                e.Graphics,
-                Text,
-                Font,
-                Rectangle.Round(bounds),
-                ForeColor,
-                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine);
-        }
-
-        private void UpdateRegion()
-        {
-            if (Width <= 1 || Height <= 1)
+            int textLeft = 12;
+            if (ShowDot)
             {
-                return;
+                using var glowBrush = new SolidBrush(Color.FromArgb(58, ForeColor));
+                using var dotBrush = new SolidBrush(ForeColor);
+                g.FillEllipse(glowBrush, 9, (Height / 2) - 5, 10, 10);
+                g.FillEllipse(dotBrush, 11, (Height / 2) - 3, 6, 6);
+                textLeft = 24;
             }
 
-            Region?.Dispose();
-            using GraphicsPath path = AppTheme.CreateRoundedRectangle(new Rectangle(0, 0, Width - 1, Height - 1), CornerRadius);
-            Region = new Region(path);
+            Rectangle textRect = new Rectangle(textLeft, 0, Width - textLeft - 10, Height);
+            TextRenderer.DrawText(
+                g,
+                Text.ToUpperInvariant(),
+                Font,
+                textRect,
+                ForeColor,
+                TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine);
         }
     }
 }

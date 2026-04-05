@@ -18,4 +18,12 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="MainForm.cs" />
+    <Compile Remove="CredentialDialog.cs" />
+    <Compile Remove="RecoveryKeyDialog.cs" />
+    <Compile Remove="DialogHtmlBuilder.cs" />
+    <Compile Remove="VaultHtmlBuilder.cs" />
+  </ItemGroup>
+
 </Project>

@@ -17,9 +17,8 @@ namespace TremauxLock
                 true);
             DoubleBuffered = true;
             ResizeRedraw = true;
+            AutoScroll = false;
             BackColor = AppTheme.CardFill;
-            Resize += (_, _) => UpdateRegion();
-            UpdateRegion();
         }
 
         [Browsable(false)]
@@ -46,12 +45,6 @@ namespace TremauxLock
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int CornerRadius { get; set; } = AppTheme.RadiusPanel;
 
-        protected override void OnSizeChanged(System.EventArgs e)
-        {
-            base.OnSizeChanged(e);
-            UpdateRegion();
-        }
-
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
@@ -67,17 +60,24 @@ namespace TremauxLock
             e.Graphics.CompositingQuality = CompositingQuality.HighQuality;
 
             RectangleF bounds = new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f);
-            using GraphicsPath path = AppTheme.CreateRoundedRectangle(bounds, CornerRadius);
             using Brush fillBrush = CreateFillBrush(bounds);
             using Pen borderPen = new Pen(BorderColor, BorderThickness);
 
+            if (CornerRadius <= 1)
+            {
+                e.Graphics.FillRectangle(fillBrush, bounds);
+                e.Graphics.DrawRectangle(borderPen, bounds.X, bounds.Y, bounds.Width, bounds.Height);
+                return;
+            }
+
+            using GraphicsPath path = AppTheme.CreateRoundedRectangle(bounds, CornerRadius);
             e.Graphics.FillPath(fillBrush, path);
             e.Graphics.DrawPath(borderPen, path);
 
             if (InnerStrokeColor.A > 0)
             {
                 RectangleF innerBounds = RectangleF.Inflate(bounds, -1f, -1f);
-                using GraphicsPath innerPath = AppTheme.CreateRoundedRectangle(innerBounds, Math.Max(6f, CornerRadius - 1f));
+                using GraphicsPath innerPath = AppTheme.CreateRoundedRectangle(innerBounds, Math.Max(4f, CornerRadius - 1f));
                 using Pen innerPen = new Pen(InnerStrokeColor, 1f);
                 e.Graphics.DrawPath(innerPen, innerPath);
             }
@@ -93,16 +93,5 @@ namespace TremauxLock
             return new LinearGradientBrush(bounds, FillColor, SecondaryFillColor, 90f);
         }
 
-        private void UpdateRegion()
-        {
-            if (Width <= 1 || Height <= 1)
-            {
-                return;
-            }
-
-            Region?.Dispose();
-            using GraphicsPath path = AppTheme.CreateRoundedRectangle(new Rectangle(0, 0, Width - 1, Height - 1), CornerRadius);
-            Region = new Region(path);
-        }
     }
 }
