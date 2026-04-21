@@ -7,64 +7,86 @@ namespace TremauxLock
     {
         // Layout
         public const int WindowPadding = 24;
-        public const int CardPadding = 20;
+        public const int CardPadding = 24;
         public const int GridGap = 16;
-        public const int RadiusCard = 8;
-        public const int RadiusPanel = 8;
-        public const int RadiusButton = 8;
+        public const int RadiusCard = 12;
+        public const int RadiusPanel = 12;
+        public const int RadiusButton = 10;
         public const int RadiusBadge = 999;
 
-        // Background layers — GitHub Dark palette
-        public static readonly Color BackgroundPrimary = Color.FromArgb(13, 17, 23);
-        public static readonly Color Surface           = Color.FromArgb(22, 27, 34);
-        public static readonly Color SurfaceInset      = Color.FromArgb(15, 19, 25);
+        // Background layers — Hacker Impact Palette
+        public static readonly Color BackgroundPrimary = Color.FromArgb(0, 0, 0);
+        public static readonly Color BackgroundSurface = Color.FromArgb(10, 10, 10);
+        public static readonly Color BackgroundPanel = Color.FromArgb(20, 20, 20);
+        public static readonly Color BackgroundOverlay = Color.FromArgb(17, 17, 17, 100);
 
-        // Borders
-        public static readonly Color Border    = Color.FromArgb(33, 38, 45);
-        public static readonly Color BorderMid = Color.FromArgb(48, 54, 61);
+        // Borders and Glow Effects
+        public static readonly Color BorderPrimary = Color.FromArgb(51, 51, 51);
+        public static readonly Color BorderSecondary = Color.FromArgb(34, 34, 34);
+        public static readonly Color GlowPrimary = Color.FromArgb(0, 255, 136, 200);
+        public static readonly Color GlowSecondary = Color.FromArgb(255, 0, 255, 200);
+        public static readonly Color GlowAccent = Color.FromArgb(0, 255, 255, 150);
+        public static readonly Color GlowDanger = Color.FromArgb(255, 0, 0, 150);
 
-        // Accents
-        public static readonly Color AccentBlue   = Color.FromArgb(88, 166, 255);
-        public static readonly Color AccentGreen  = Color.FromArgb(63, 185, 80);
-        public static readonly Color AccentOrange = Color.FromArgb(225, 178, 94);
-        public static readonly Color AccentRed    = Color.FromArgb(248, 81, 73);
+        // Hacker Impact Colors
+        public static readonly Color HackerGreen = Color.FromArgb(0, 255, 136);
+        public static readonly Color HackerMagenta = Color.FromArgb(255, 0, 255);
+        public static readonly Color HackerCyan = Color.FromArgb(0, 255, 255);
+        public static readonly Color HackerRed = Color.FromArgb(255, 0, 0);
+        public static readonly Color HackerYellow = Color.FromArgb(255, 255, 0);
+        public static readonly Color HackerBlue = Color.FromArgb(0, 128, 255);
 
-        // Text
-        public static readonly Color TextPrimary   = Color.FromArgb(230, 237, 243);
-        public static readonly Color TextSecondary = Color.FromArgb(139, 148, 158);
-        public static readonly Color TextSoft      = Color.FromArgb(72, 79, 88);
+        // Text Colors with Impact
+        public static readonly Color TextPrimary = Color.FromArgb(255, 255, 255);
+        public static readonly Color TextSecondary = Color.FromArgb(200, 200, 200);
+        public static readonly Color TextMuted = Color.FromArgb(128, 128, 128);
+        public static readonly Color TextCode = Color.FromArgb(0, 255, 136);
+        public static readonly Color TextAccent = Color.FromArgb(255, 0, 255);
+        public static readonly Color TextWarning = Color.FromArgb(255, 255, 0);
 
-        // Legacy aliases
-        public static readonly Color BackgroundTop    = Color.FromArgb(13, 17, 23);
-        public static readonly Color BackgroundBottom = Color.FromArgb(13, 17, 23);
-        public static readonly Color BackgroundGlow   = Color.FromArgb(18, 88, 166, 255);
-        public static readonly Color CardFill         = Color.FromArgb(22, 27, 34);
-        public static readonly Color CardFillAlt      = Color.FromArgb(22, 27, 34);
-        public static readonly Color CardBorder       = Color.FromArgb(33, 38, 45);
-        public static readonly Color PanelFill        = Color.FromArgb(22, 27, 34);
-        public static readonly Color PanelFillAlt     = Color.FromArgb(22, 27, 34);
-        public static readonly Color PanelBorder      = Color.FromArgb(33, 38, 45);
-        public static readonly Color Separator        = Color.FromArgb(33, 38, 45);
-        public static readonly Color InputFill        = Color.FromArgb(13, 17, 23);
-        public static readonly Color InputBorder      = Color.FromArgb(48, 54, 61);
-        public static readonly Color InputBorderFocus = Color.FromArgb(88, 166, 255);
-        public static readonly Color Accent           = Color.FromArgb(88, 166, 255);
-        public static readonly Color AccentEnd        = Color.FromArgb(88, 166, 255);
-        public static readonly Color AccentSoft       = Color.FromArgb(88, 166, 255);
-        public static readonly Color AccentStrong     = Color.FromArgb(88, 166, 255);
-        public static readonly Color BadgeFill        = Color.FromArgb(25, 63, 185, 80);
-        public static readonly Color BadgeBorder      = Color.FromArgb(64, 63, 185, 80);
-        public static readonly Color Warning          = Color.FromArgb(225, 178, 94);
-        public static readonly Color Danger           = Color.FromArgb(248, 81, 73);
+        // Legacy aliases for compatibility
+        public static readonly Color BackgroundTop = BackgroundPrimary;
+        public static readonly Color BackgroundBottom = BackgroundPrimary;
+        public static readonly Color BackgroundGlow = GlowPrimary;
+        public static readonly Color CardFill = BackgroundSurface;
+        public static readonly Color CardFillAlt = BackgroundPanel;
+        public static readonly Color CardBorder = BorderPrimary;
+        public static readonly Color PanelFill = BackgroundSurface;
+        public static readonly Color PanelFillAlt = BackgroundPanel;
+        public static readonly Color PanelBorder = BorderPrimary;
+        public static readonly Color Separator = BorderPrimary;
+        public static readonly Color InputFill = BackgroundSurface;
+        public static readonly Color InputBorder = BorderSecondary;
+        public static readonly Color InputBorderFocus = HackerGreen;
+        public static readonly Color Accent = HackerGreen;
+        public static readonly Color AccentEnd = HackerGreen;
+        public static readonly Color AccentSoft = HackerGreen;
+        public static readonly Color AccentStrong = HackerGreen;
+        public static readonly Color BadgeFill = Color.FromArgb(25, 0, 255, 0);
+        public static readonly Color BadgeBorder = Color.FromArgb(64, 0, 255, 0);
+        public static readonly Color Warning = HackerYellow;
+        public static readonly Color Danger = HackerRed;
+
+        // Legacy aliases used by AccentButton, VaultCard, InfoRow, MainForm
+        public static readonly Color Border = BorderPrimary;
+        public static readonly Color BorderMid = BorderSecondary;
+        public static readonly Color TextSoft = TextSecondary;
+        public static readonly Color Surface = BackgroundSurface;
+        public static readonly Color AccentBlue = HackerBlue;
+        public static readonly Color AccentGreen = HackerGreen;
+
+        // Hacker Impact Fonts
+        public static Font CreateDisplayFont(float size) =>
+            CreateFont("Orbitron", size, FontStyle.Bold);
 
         public static Font CreateTitleFont(float size) =>
-            CreateFont("Segoe UI", size, FontStyle.Bold);
+            CreateFont("Rajdhani", size, FontStyle.Bold);
 
         public static Font CreateBodyFont(float size, FontStyle style = FontStyle.Regular) =>
-            CreateFont("Segoe UI", size, style);
+            CreateFont("Fira Code", size, style);
 
         public static Font CreateCodeFont(float size, FontStyle style = FontStyle.Regular) =>
-            CreateFont("Consolas", size, style);
+            CreateFont("Fira Code", size, style);
 
         public static Color WithAlpha(Color color, int alpha) =>
             Color.FromArgb(Math.Max(0, Math.Min(255, alpha)), color);

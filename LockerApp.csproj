@@ -9,6 +9,14 @@
     <ApplicationIcon>ladybug.ico</ApplicationIcon>
     <AssemblyName>TremauxLock</AssemblyName>
     <RootNamespace>TremauxLock</RootNamespace>
+    <!-- Publicação: um único .exe (sem WebView2 / sem DLL nativa Edge) -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
+    <PublishReadyToRun>false</PublishReadyToRun>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,14 +24,6 @@
     <None Update="ladybug.ico">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Remove="MainForm.cs" />
-    <Compile Remove="CredentialDialog.cs" />
-    <Compile Remove="RecoveryKeyDialog.cs" />
-    <Compile Remove="DialogHtmlBuilder.cs" />
-    <Compile Remove="VaultHtmlBuilder.cs" />
   </ItemGroup>
 
 </Project>

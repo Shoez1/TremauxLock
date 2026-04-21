@@ -221,7 +221,17 @@ namespace TremauxLock
                         Directory.CreateDirectory(encryptedDirectory);
                     }
 
-                    byte[] plainBytes = File.ReadAllBytes(file);
+                    byte[] plainBytes;
+                    using (var fs = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096))
+                    {
+                        plainBytes = new byte[fs.Length];
+                        int bytesRead = fs.Read(plainBytes, 0, plainBytes.Length);
+                        if (bytesRead != plainBytes.Length)
+                        {
+                            throw new InvalidOperationException($"Failed to read complete file: {file}");
+                        }
+                    }
+                    
                     totalBytes += plainBytes.LongLength;
 
                     try

@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "Gk89DCXpQ4A=",
+  "dgSpecHash": "ajy2zvrJhLc=",
   "success": true,
   "projectFilePath": "X:\\Projetos\\TremauxLock\\LockerApp.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\Matheus\\.nuget\\packages\\microsoft.net.illink.tasks\\9.0.14\\microsoft.net.illink.tasks.9.0.14.nupkg.sha512",
     "C:\\Users\\Matheus\\.nuget\\packages\\microsoft.netcore.app.ref\\9.0.14\\microsoft.netcore.app.ref.9.0.14.nupkg.sha512",
     "C:\\Users\\Matheus\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x64\\9.0.14\\microsoft.netcore.app.runtime.win-x64.9.0.14.nupkg.sha512",
     "C:\\Users\\Matheus\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\9.0.14\\microsoft.windowsdesktop.app.ref.9.0.14.nupkg.sha512",

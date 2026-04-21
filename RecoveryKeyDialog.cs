@@ -1,221 +1,121 @@
 using System;
 using System.Drawing;
-using System.IO;
-using System.Runtime.InteropServices;
-using System.Text.Json;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using Microsoft.Web.WebView2.Core;
-using Microsoft.Web.WebView2.WinForms;
 
 namespace TremauxLock
 {
     internal sealed class RecoveryKeyDialog : Form
     {
-        [DllImport("user32.dll")]
-        private static extern bool ReleaseCapture();
-
-        [DllImport("user32.dll")]
-        private static extern int SendMessage(IntPtr hWnd, int msg, int wParam, int lParam);
-
-        private const int WM_NCLBUTTONDOWN = 0xA1;
-        private const int HT_CAPTION = 2;
-
-        private readonly string recoveryKey;
-        private readonly int fileCount;
-        private readonly long totalBytes;
-        private readonly string? backupWarning;
-        private readonly WebView2 webView;
-        private readonly Panel splashPanel;
-        private readonly Label lblSplash;
-        private bool webViewReady;
-
         public RecoveryKeyDialog(string recoveryKey, int fileCount, long totalBytes, string? backupWarning)
         {
-            this.recoveryKey = recoveryKey;
-            this.fileCount = fileCount;
-            this.totalBytes = totalBytes;
-            this.backupWarning = backupWarning;
-
             Text = "Chave de recuperacao";
-            ClientSize = new Size(680, 460);
-            StartPosition = FormStartPosition.CenterParent;
-            FormBorderStyle = FormBorderStyle.None;
-            ShowInTaskbar = false;
+            FormBorderStyle = FormBorderStyle.FixedDialog;
             MinimizeBox = false;
             MaximizeBox = false;
-            DoubleBuffered = true;
+            ShowInTaskbar = false;
+            StartPosition = FormStartPosition.CenterParent;
             BackColor = AppTheme.BackgroundPrimary;
             ForeColor = AppTheme.TextPrimary;
             Font = AppTheme.CreateBodyFont(9.5f);
-            KeyPreview = true;
+            ClientSize = new Size(620, 460);
 
-            webView = new WebView2
+            var lblHead = new Label
             {
-                Dock = DockStyle.Fill,
-                Visible = false,
-                AllowExternalDrop = false,
-                DefaultBackgroundColor = AppTheme.BackgroundPrimary
+                Bounds = new Rectangle(24, 20, ClientSize.Width - 48, 36),
+                ForeColor = AppTheme.HackerCyan,
+                Font = AppTheme.CreateTitleFont(15f),
+                Text = "Guarde esta chave fora deste computador",
+                TextAlign = ContentAlignment.MiddleLeft
             };
 
-            splashPanel = new Panel
+            var lblSub = new Label
             {
-                Dock = DockStyle.Fill,
-                BackColor = AppTheme.BackgroundPrimary
-            };
-
-            lblSplash = new Label
-            {
-                Dock = DockStyle.Fill,
-                Text = "Carregando...",
-                TextAlign = ContentAlignment.MiddleCenter,
+                Bounds = new Rectangle(24, 56, ClientSize.Width - 48, 40),
                 ForeColor = AppTheme.TextSecondary,
-                BackColor = AppTheme.BackgroundPrimary,
-                Font = AppTheme.CreateBodyFont(10f)
+                Font = AppTheme.CreateBodyFont(9.5f),
+                Text = "Sem esta chave, apenas a senha principal desbloqueia o cofre. Copie e armazene em local seguro."
             };
 
-            splashPanel.Controls.Add(lblSplash);
-            Controls.Add(webView);
-            Controls.Add(splashPanel);
-
-            Paint += (_, e) =>
+            var txtKey = new TextBox
             {
-                using var pen = new Pen(AppTheme.Border, 1f);
-                e.Graphics.DrawRectangle(pen, 0, 0, Math.Max(0, Width - 1), Math.Max(0, Height - 1));
+                Bounds = new Rectangle(24, 108, ClientSize.Width - 48, 120),
+                ReadOnly = true,
+                Multiline = true,
+                WordWrap = true,
+                BorderStyle = BorderStyle.FixedSingle,
+                BackColor = AppTheme.BackgroundPanel,
+                ForeColor = AppTheme.TextCode,
+                Font = AppTheme.CreateCodeFont(11f),
+                Text = recoveryKey
             };
 
-            Shown += async (_, _) => await EnsureWebViewAsync();
-            KeyDown += OnDialogKeyDown;
-        }
-
-        private async Task EnsureWebViewAsync()
-        {
-            if (webViewReady)
+            string stats = $"Arquivos: {fileCount}   |   Volume: {VaultCrypto.FormatSize(totalBytes)}";
+            var lblStats = new Label
             {
-                return;
+                Bounds = new Rectangle(24, 238, ClientSize.Width - 48, 22),
+                ForeColor = AppTheme.TextSecondary,
+                Font = AppTheme.CreateBodyFont(9f),
+                Text = stats
+            };
+
+            Label? lblWarn = null;
+            if (!string.IsNullOrWhiteSpace(backupWarning))
+            {
+                lblWarn = new Label
+                {
+                    Bounds = new Rectangle(24, 266, ClientSize.Width - 48, 72),
+                    ForeColor = AppTheme.TextWarning,
+                    Font = AppTheme.CreateBodyFont(9f),
+                    Text = backupWarning
+                };
             }
 
-            try
+            var btnCopy = new HackerButton
             {
-                await webView.EnsureCoreWebView2Async();
-
-                CoreWebView2Settings settings = webView.CoreWebView2.Settings;
-                settings.AreDefaultContextMenusEnabled = false;
-                settings.AreDevToolsEnabled = false;
-                settings.AreBrowserAcceleratorKeysEnabled = true;
-                settings.IsStatusBarEnabled = false;
-                settings.IsZoomControlEnabled = false;
-
-                webView.CoreWebView2.WebMessageReceived += OnWebMessageReceived;
-                webView.NavigateToString(DialogHtmlBuilder.BuildRecovery(recoveryKey, fileCount, totalBytes, backupWarning));
-                webViewReady = true;
-                splashPanel.Visible = false;
-                webView.Visible = true;
-            }
-            catch (Exception ex)
+                Text = "Copiar chave",
+                ButtonStyle = HackerButtonStyle.Accent,
+                Location = new Point(24, ClientSize.Height - 24 - 44),
+                Width = 180,
+                Height = 44
+            };
+            btnCopy.Click += (_, _) =>
             {
-                lblSplash.Text = "Falha ao carregar.";
-                MessageBox.Show(
-                    "Nao foi possivel abrir esta tela.\n\n" + ex.Message,
-                    "TremauxLock",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-                DialogResult = DialogResult.OK;
-                Close();
-            }
-        }
-
-        private async void OnWebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
-        {
-            string action;
-            try
-            {
-                action = e.TryGetWebMessageAsString();
-            }
-            catch
-            {
-                return;
-            }
-
-            switch (action)
-            {
-                case "drag-window":
-                    ReleaseCapture();
-                    SendMessage(Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
-                    break;
-
-                case "copy":
+                try
+                {
                     Clipboard.SetText(recoveryKey);
-                    await ApplyNoticeAsync("Chave copiada para a area de transferencia.", false);
-                    break;
-
-                case "save":
-                    await SaveRecoveryKeyAsync();
-                    break;
-
-                case "close":
-                    DialogResult = DialogResult.OK;
-                    Close();
-                    break;
-            }
-        }
-
-        private async Task SaveRecoveryKeyAsync()
-        {
-            using var dialog = new SaveFileDialog
-            {
-                Filter = "Texto (*.txt)|*.txt",
-                FileName = "tremauxlock-vault-recovery.txt",
-                Title = "Salvar chave de recuperacao"
+                    MessageBox.Show("Chave copiada para a area de transferencia.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Nao foi possivel copiar: {ex.Message}", Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
             };
 
-            if (dialog.ShowDialog(this) != DialogResult.OK)
+            var btnOk = new HackerButton
             {
-                return;
+                Text = "Entendi",
+                ButtonStyle = HackerButtonStyle.Primary,
+                Location = new Point(ClientSize.Width - 24 - 180, ClientSize.Height - 24 - 44),
+                Width = 180,
+                Height = 44,
+                DialogResult = DialogResult.OK
+            };
+
+            AcceptButton = btnOk;
+
+            Controls.Add(lblHead);
+            Controls.Add(lblSub);
+            Controls.Add(txtKey);
+            Controls.Add(lblStats);
+            if (lblWarn != null)
+            {
+                Controls.Add(lblWarn);
             }
 
-            try
-            {
-                string content = $"""
-                TremauxLock - Chave de recuperacao
-                Gerada em: {DateTime.Now:yyyy-MM-dd HH:mm:ss}
+            Controls.Add(btnCopy);
+            Controls.Add(btnOk);
 
-                Chave:
-                {recoveryKey}
-
-                Guarde este arquivo em local seguro.
-                """;
-
-                File.WriteAllText(dialog.FileName, content);
-                await ApplyNoticeAsync("Chave salva com sucesso.", false);
-            }
-            catch (Exception ex)
-            {
-                await ApplyNoticeAsync(ex.Message, true);
-            }
-        }
-
-        private async Task ApplyNoticeAsync(string message, bool warning)
-        {
-            if (!webViewReady || webView.CoreWebView2 == null)
-            {
-                MessageBox.Show(message, "TremauxLock", MessageBoxButtons.OK, warning ? MessageBoxIcon.Warning : MessageBoxIcon.Information);
-                return;
-            }
-
-            string script = $"window.applyRecoveryNotice({JsonSerializer.Serialize(message)}, {(warning ? "true" : "false")});";
-            await webView.CoreWebView2.ExecuteScriptAsync(script);
-        }
-
-        private void OnDialogKeyDown(object? sender, KeyEventArgs e)
-        {
-            if (e.KeyCode != Keys.Escape)
-            {
-                return;
-            }
-
-            DialogResult = DialogResult.OK;
-            Close();
+            Shown += (_, _) => txtKey.SelectAll();
         }
     }
 }

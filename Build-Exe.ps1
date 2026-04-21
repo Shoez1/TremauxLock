@@ -66,7 +66,8 @@ try {
         $assemblyName = [System.IO.Path]::GetFileNameWithoutExtension($projectPath)
     }
 
-    $publishDir = Join-Path $projectRoot ("bin\{0}\{1}\{2}\publish" -f $Configuration, $targetFramework, $RuntimeIdentifier)
+    # Pasta fixa e limpa: só o .exe após o publish (ficheiros auxiliares são removidos)
+    $publishDir = Join-Path $projectRoot ("dist\{0}" -f $RuntimeIdentifier)
     $outputExe = Join-Path $publishDir ("{0}.exe" -f $assemblyName)
 
     Write-Log "INFO" "Executando dotnet restore..."
@@ -75,20 +76,38 @@ try {
         throw ("Falha no dotnet restore. Veja o log em '{0}'." -f $logFile)
     }
 
-    Write-Log "INFO" "Executando dotnet publish..."
+    if (Test-Path -LiteralPath $publishDir) {
+        Write-Log "INFO" ("Limpando pasta de saida: {0}" -f $publishDir)
+        Remove-Item -LiteralPath $publishDir -Recurse -Force -ErrorAction Stop
+    }
+    New-Item -ItemType Directory -Path $publishDir -Force | Out-Null
+
+    Write-Log "INFO" "Executando dotnet publish (single-file)..."
     Invoke-And-Log {
         & dotnet publish $projectPath `
             -c $Configuration `
             -r $RuntimeIdentifier `
             --self-contained true `
             --no-restore `
+            -o $publishDir `
             /p:PublishSingleFile=true `
             /p:EnableCompressionInSingleFile=true `
+            /p:IncludeNativeLibrariesForSelfExtract=true `
             /p:DebugType=None `
-            /p:DebugSymbols=false
+            /p:DebugSymbols=false `
+            /p:GenerateRuntimeConfigurationFiles=false
     }
     if ($LASTEXITCODE -ne 0) {
         throw ("Falha no dotnet publish. Veja o log em '{0}'." -f $logFile)
+    }
+
+    # Garantir apenas o .exe na pasta de distribuição (remove .pdb, .json, .dll soltas, etc.)
+    $exeName = ("{0}.exe" -f $assemblyName)
+    Get-ChildItem -LiteralPath $publishDir -File -ErrorAction SilentlyContinue | ForEach-Object {
+        if ($_.Name -ne $exeName) {
+            Write-Log "INFO" ("Removendo arquivo extra: {0}" -f $_.Name)
+            Remove-Item -LiteralPath $_.FullName -Force -ErrorAction Stop
+        }
     }
 
     if (Test-Path -LiteralPath $outputExe) {
