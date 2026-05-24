@@ -1,4 +1,13 @@
 bin/
 obj/
+dist/
+private/
+private.locked/
+private.pending/
+*.backup/
+*.pending/
+*.log
+private.vault.json
+private.vault.json.pending
 *.user
 *.vault-recovery.txt

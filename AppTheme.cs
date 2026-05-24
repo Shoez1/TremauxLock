@@ -9,44 +9,44 @@ namespace TremauxLock
         public const int WindowPadding = 24;
         public const int CardPadding = 24;
         public const int GridGap = 16;
-        public const int RadiusCard = 12;
-        public const int RadiusPanel = 12;
-        public const int RadiusButton = 10;
+        public const int RadiusCard = 8;
+        public const int RadiusPanel = 8;
+        public const int RadiusButton = 7;
         public const int RadiusBadge = 999;
 
-        // Background layers — Hacker Impact Palette
-        public static readonly Color BackgroundPrimary = Color.FromArgb(0, 0, 0);
-        public static readonly Color BackgroundSurface = Color.FromArgb(10, 10, 10);
-        public static readonly Color BackgroundPanel = Color.FromArgb(20, 20, 20);
-        public static readonly Color BackgroundOverlay = Color.FromArgb(17, 17, 17, 100);
+        // Background layers: restrained, high-contrast Windows vault palette.
+        public static readonly Color BackgroundPrimary = Color.FromArgb(6, 9, 14);
+        public static readonly Color BackgroundSurface = Color.FromArgb(15, 21, 31);
+        public static readonly Color BackgroundPanel = Color.FromArgb(20, 27, 39);
+        public static readonly Color BackgroundOverlay = Color.FromArgb(18, 25, 36, 180);
 
-        // Borders and Glow Effects
-        public static readonly Color BorderPrimary = Color.FromArgb(51, 51, 51);
-        public static readonly Color BorderSecondary = Color.FromArgb(34, 34, 34);
-        public static readonly Color GlowPrimary = Color.FromArgb(0, 255, 136, 200);
-        public static readonly Color GlowSecondary = Color.FromArgb(255, 0, 255, 200);
-        public static readonly Color GlowAccent = Color.FromArgb(0, 255, 255, 150);
-        public static readonly Color GlowDanger = Color.FromArgb(255, 0, 0, 150);
+        // Borders and accent washes.
+        public static readonly Color BorderPrimary = Color.FromArgb(70, 84, 104);
+        public static readonly Color BorderSecondary = Color.FromArgb(48, 61, 79);
+        public static readonly Color GlowPrimary = Color.FromArgb(95, 109, 235, 255);
+        public static readonly Color GlowSecondary = Color.FromArgb(90, 198, 120, 221);
+        public static readonly Color GlowAccent = Color.FromArgb(80, 109, 235, 255);
+        public static readonly Color GlowDanger = Color.FromArgb(90, 255, 93, 115);
 
-        // Hacker Impact Colors
-        public static readonly Color HackerGreen = Color.FromArgb(0, 255, 136);
-        public static readonly Color HackerMagenta = Color.FromArgb(255, 0, 255);
-        public static readonly Color HackerCyan = Color.FromArgb(0, 255, 255);
-        public static readonly Color HackerRed = Color.FromArgb(255, 0, 0);
-        public static readonly Color HackerYellow = Color.FromArgb(255, 255, 0);
-        public static readonly Color HackerBlue = Color.FromArgb(0, 128, 255);
+        // Status colors kept as aliases for the existing controls.
+        public static readonly Color HackerGreen = Color.FromArgb(84, 238, 166);
+        public static readonly Color HackerMagenta = Color.FromArgb(204, 137, 228);
+        public static readonly Color HackerCyan = Color.FromArgb(92, 231, 255);
+        public static readonly Color HackerRed = Color.FromArgb(255, 93, 115);
+        public static readonly Color HackerYellow = Color.FromArgb(242, 201, 76);
+        public static readonly Color HackerBlue = Color.FromArgb(86, 149, 255);
 
-        // Text Colors with Impact
-        public static readonly Color TextPrimary = Color.FromArgb(255, 255, 255);
-        public static readonly Color TextSecondary = Color.FromArgb(200, 200, 200);
-        public static readonly Color TextMuted = Color.FromArgb(128, 128, 128);
-        public static readonly Color TextCode = Color.FromArgb(0, 255, 136);
-        public static readonly Color TextAccent = Color.FromArgb(255, 0, 255);
-        public static readonly Color TextWarning = Color.FromArgb(255, 255, 0);
+        // Text colors.
+        public static readonly Color TextPrimary = Color.FromArgb(250, 252, 255);
+        public static readonly Color TextSecondary = Color.FromArgb(209, 219, 232);
+        public static readonly Color TextMuted = Color.FromArgb(160, 174, 194);
+        public static readonly Color TextCode = Color.FromArgb(125, 232, 194);
+        public static readonly Color TextAccent = HackerCyan;
+        public static readonly Color TextWarning = HackerYellow;
 
         // Legacy aliases for compatibility
         public static readonly Color BackgroundTop = BackgroundPrimary;
-        public static readonly Color BackgroundBottom = BackgroundPrimary;
+        public static readonly Color BackgroundBottom = Color.FromArgb(3, 5, 9);
         public static readonly Color BackgroundGlow = GlowPrimary;
         public static readonly Color CardFill = BackgroundSurface;
         public static readonly Color CardFillAlt = BackgroundPanel;
@@ -75,18 +75,18 @@ namespace TremauxLock
         public static readonly Color AccentBlue = HackerBlue;
         public static readonly Color AccentGreen = HackerGreen;
 
-        // Hacker Impact Fonts
+        // Fonts
         public static Font CreateDisplayFont(float size) =>
-            CreateFont("Orbitron", size, FontStyle.Bold);
+            CreateFont("Segoe UI", size, FontStyle.Bold);
 
         public static Font CreateTitleFont(float size) =>
-            CreateFont("Rajdhani", size, FontStyle.Bold);
+            CreateFont("Segoe UI", size, FontStyle.Bold);
 
         public static Font CreateBodyFont(float size, FontStyle style = FontStyle.Regular) =>
-            CreateFont("Fira Code", size, style);
+            CreateFont("Segoe UI", size, style);
 
         public static Font CreateCodeFont(float size, FontStyle style = FontStyle.Regular) =>
-            CreateFont("Fira Code", size, style);
+            CreateFont("Consolas", size, style);
 
         public static Color WithAlpha(Color color, int alpha) =>
             Color.FromArgb(Math.Max(0, Math.Min(255, alpha)), color);
@@ -128,6 +128,11 @@ namespace TremauxLock
             {
                 if (!string.IsNullOrWhiteSpace(fallback))
                     try { return new Font(fallback, size, style, GraphicsUnit.Point); } catch { }
+
+                // Fallback to system fonts based on style
+                string systemFallback = style == FontStyle.Bold ? "Segoe UI" : "Consolas";
+                try { return new Font(systemFallback, size, style, GraphicsUnit.Point); } catch { }
+
                 return new Font(SystemFonts.DefaultFont.FontFamily, size, style, GraphicsUnit.Point);
             }
         }

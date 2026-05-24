@@ -10,6 +10,7 @@ namespace TremauxLock
         [STAThread]
         private static void Main()
         {
+            Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
@@ -58,9 +59,11 @@ namespace TremauxLock
                     errorLogPath,
                     $"""
                     TremauxLock error log
-                    Timestamp: {DateTime.Now:yyyy-MM-dd HH:mm:ss}
+                    TimestampUtc: {DateTime.UtcNow:O}
 
-                    {exception}
+                    ExceptionType: {exception.GetType().FullName}
+                    HResult: 0x{exception.HResult:X8}
+                    Details: omitted to avoid persisting vault paths or secrets.
                     """);
             }
             catch

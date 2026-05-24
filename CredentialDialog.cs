@@ -190,12 +190,40 @@ namespace TremauxLock
                         return;
                     }
 
+                    if (!VaultCrypto.IsValidRecoveryKeyFormat(key))
+                    {
+                        MessageBox.Show(
+                            "Formato de chave invalido. A chave deve ter 32 caracteres hexadecimais (ex: ABCD-1234-...)",
+                            Text,
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Warning);
+                        return;
+                    }
+
                     Secret = key;
                     break;
             }
 
             DialogResult = DialogResult.OK;
             Close();
+        }
+
+        public void ClearSecret()
+        {
+            Secret = string.Empty;
+            fieldPassword.TextValue = string.Empty;
+            fieldConfirm.TextValue = string.Empty;
+            txtRecovery.Text = string.Empty;
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                ClearSecret();
+            }
+
+            base.Dispose(disposing);
         }
     }
 }

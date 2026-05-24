@@ -12,6 +12,7 @@ namespace TremauxLock
 
         private bool isFocused;
         private bool useCodeStyle;
+        private string? placeholderText;
 
         public InputField()
         {
@@ -30,11 +31,7 @@ namespace TremauxLock
             {
                 BackColor = AppTheme.InputFill
             };
-            inputShell.Paint += (_, e) =>
-            {
-                using var pen = new Pen(isFocused ? AppTheme.InputBorderFocus : AppTheme.InputBorder, 1f);
-                e.Graphics.DrawRectangle(pen, 0, 0, Math.Max(0, inputShell.Width - 1), Math.Max(0, inputShell.Height - 1));
-            };
+            inputShell.Paint += InputShell_Paint;
 
             txtInput = new TextBox
             {
@@ -57,7 +54,11 @@ namespace TremauxLock
                 inputShell.Invalidate();
             };
 
-            txtInput.TextChanged += (_, _) => TextValueChanged?.Invoke(this, System.EventArgs.Empty);
+            txtInput.TextChanged += (_, _) =>
+            {
+                TextValueChanged?.Invoke(this, System.EventArgs.Empty);
+                inputShell.Invalidate();
+            };
 
             inputShell.Controls.Add(txtInput);
             Controls.Add(lblCaption);
@@ -67,6 +68,24 @@ namespace TremauxLock
 
             Resize += (_, _) => LayoutControls();
             LayoutControls();
+        }
+
+        private void InputShell_Paint(object? sender, PaintEventArgs e)
+        {
+            using var pen = new Pen(isFocused ? AppTheme.InputBorderFocus : AppTheme.InputBorder, 1f);
+            e.Graphics.DrawRectangle(pen, 0, 0, Math.Max(0, inputShell.Width - 1), Math.Max(0, inputShell.Height - 1));
+
+            // Draw placeholder text when empty and not focused
+            if (!string.IsNullOrWhiteSpace(placeholderText) && string.IsNullOrEmpty(txtInput.Text) && !isFocused)
+            {
+                TextRenderer.DrawText(
+                    e.Graphics,
+                    placeholderText,
+                    txtInput.Font,
+                    new Rectangle(12, 11, Math.Max(0, inputShell.Width - 24), 18),
+                    AppTheme.TextMuted,
+                    TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
+            }
         }
 
         protected override void OnBackColorChanged(System.EventArgs e)
@@ -93,10 +112,14 @@ namespace TremauxLock
 
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public string PlaceholderText
+        public string? PlaceholderText
         {
-            get => txtInput.PlaceholderText;
-            set => txtInput.PlaceholderText = value;
+            get => placeholderText;
+            set
+            {
+                placeholderText = value;
+                inputShell.Invalidate();
+            }
         }
 
         [Browsable(false)]

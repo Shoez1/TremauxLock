@@ -9,7 +9,7 @@
     <ApplicationIcon>ladybug.ico</ApplicationIcon>
     <AssemblyName>TremauxLock</AssemblyName>
     <RootNamespace>TremauxLock</RootNamespace>
-    <!-- Publicação: um único .exe (sem WebView2 / sem DLL nativa Edge) -->
+    <!-- Publicacao: um unico .exe (sem WebView2 / sem DLL nativa Edge) -->
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>

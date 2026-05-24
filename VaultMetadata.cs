@@ -4,7 +4,10 @@ namespace TremauxLock
 {
     internal sealed class VaultMetadata
     {
-        public string Version { get; set; } = "2.0";
+        public const string CurrentVersion = "3.1";
+        public const string LegacyPasswordNormalizationVersion = "3.0";
+
+        public string Version { get; set; } = CurrentVersion;
         public string WorkingFolderName { get; set; } = "private";
         public string LockedFolderName { get; set; } = "private.locked";
         public string CreatedUtc { get; set; } = DateTime.UtcNow.ToString("O");

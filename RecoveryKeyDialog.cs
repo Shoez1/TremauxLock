@@ -6,6 +6,8 @@ namespace TremauxLock
 {
     internal sealed class RecoveryKeyDialog : Form
     {
+        private const int ClipboardClearDelayMs = 60000;
+
         public RecoveryKeyDialog(string recoveryKey, int fileCount, long totalBytes, string? backupWarning)
         {
             Text = "Chave de recuperacao";
@@ -70,6 +72,17 @@ namespace TremauxLock
                 };
             }
 
+            var clipboardTimer = new System.Windows.Forms.Timer
+            {
+                Interval = ClipboardClearDelayMs
+            };
+            clipboardTimer.Tick += (_, _) =>
+            {
+                clipboardTimer.Stop();
+                TryClearClipboardIfUnchanged(recoveryKey);
+            };
+            Disposed += (_, _) => clipboardTimer.Dispose();
+
             var btnCopy = new HackerButton
             {
                 Text = "Copiar chave",
@@ -83,7 +96,9 @@ namespace TremauxLock
                 try
                 {
                     Clipboard.SetText(recoveryKey);
-                    MessageBox.Show("Chave copiada para a area de transferencia.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    clipboardTimer.Stop();
+                    clipboardTimer.Start();
+                    MessageBox.Show("Chave copiada. A area de transferencia sera limpa em 60 segundos se continuar igual.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
@@ -116,6 +131,20 @@ namespace TremauxLock
             Controls.Add(btnOk);
 
             Shown += (_, _) => txtKey.SelectAll();
+        }
+
+        private static void TryClearClipboardIfUnchanged(string expectedText)
+        {
+            try
+            {
+                if (Clipboard.ContainsText() && Clipboard.GetText() == expectedText)
+                {
+                    Clipboard.Clear();
+                }
+            }
+            catch
+            {
+            }
         }
     }
 }

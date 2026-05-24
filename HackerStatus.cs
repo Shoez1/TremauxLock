@@ -21,6 +21,7 @@ namespace TremauxLock
         private HackerStatusType statusType = HackerStatusType.Info;
         private bool showDot = true;
         private System.Windows.Forms.Timer blinkTimer;
+        private System.Windows.Forms.Timer pulseTimer;
         private bool isBlinking = false;
         private int pulseIntensity = 0;
         private bool pulseDirection = true;
@@ -43,6 +44,11 @@ namespace TremauxLock
             blinkTimer = new System.Windows.Forms.Timer { Interval = 500 };
             blinkTimer.Tick += (_, _) => { isBlinking = !isBlinking; Invalidate(); };
             blinkTimer.Start();
+
+            // Initialize pulse animation
+            pulseTimer = new System.Windows.Forms.Timer { Interval = 50 };
+            pulseTimer.Tick += (_, _) => UpdatePulse();
+            pulseTimer.Start();
         }
 
         [Browsable(false)]
@@ -209,6 +215,8 @@ namespace TremauxLock
             {
                 blinkTimer?.Stop();
                 blinkTimer?.Dispose();
+                pulseTimer?.Stop();
+                pulseTimer?.Dispose();
             }
             base.Dispose(disposing);
         }

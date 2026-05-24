@@ -66,9 +66,11 @@ try {
         $assemblyName = [System.IO.Path]::GetFileNameWithoutExtension($projectPath)
     }
 
-    # Pasta fixa e limpa: só o .exe após o publish (ficheiros auxiliares são removidos)
+    # Publica em uma pasta temporaria para nao apagar cofres salvos ao lado do exe.
     $publishDir = Join-Path $projectRoot ("dist\{0}" -f $RuntimeIdentifier)
+    $tempPublishDir = Join-Path $projectRoot ("obj\publish\{0}" -f $RuntimeIdentifier)
     $outputExe = Join-Path $publishDir ("{0}.exe" -f $assemblyName)
+    $tempOutputExe = Join-Path $tempPublishDir ("{0}.exe" -f $assemblyName)
 
     Write-Log "INFO" "Executando dotnet restore..."
     Invoke-And-Log { & dotnet restore $projectPath -r $RuntimeIdentifier }
@@ -76,10 +78,11 @@ try {
         throw ("Falha no dotnet restore. Veja o log em '{0}'." -f $logFile)
     }
 
-    if (Test-Path -LiteralPath $publishDir) {
-        Write-Log "INFO" ("Limpando pasta de saida: {0}" -f $publishDir)
-        Remove-Item -LiteralPath $publishDir -Recurse -Force -ErrorAction Stop
+    if (Test-Path -LiteralPath $tempPublishDir) {
+        Write-Log "INFO" ("Limpando pasta temporaria de publish: {0}" -f $tempPublishDir)
+        Remove-Item -LiteralPath $tempPublishDir -Recurse -Force -ErrorAction Stop
     }
+    New-Item -ItemType Directory -Path $tempPublishDir -Force | Out-Null
     New-Item -ItemType Directory -Path $publishDir -Force | Out-Null
 
     Write-Log "INFO" "Executando dotnet publish (single-file)..."
@@ -89,7 +92,7 @@ try {
             -r $RuntimeIdentifier `
             --self-contained true `
             --no-restore `
-            -o $publishDir `
+            -o $tempPublishDir `
             /p:PublishSingleFile=true `
             /p:EnableCompressionInSingleFile=true `
             /p:IncludeNativeLibrariesForSelfExtract=true `
@@ -101,14 +104,15 @@ try {
         throw ("Falha no dotnet publish. Veja o log em '{0}'." -f $logFile)
     }
 
-    # Garantir apenas o .exe na pasta de distribuição (remove .pdb, .json, .dll soltas, etc.)
-    $exeName = ("{0}.exe" -f $assemblyName)
-    Get-ChildItem -LiteralPath $publishDir -File -ErrorAction SilentlyContinue | ForEach-Object {
-        if ($_.Name -ne $exeName) {
-            Write-Log "INFO" ("Removendo arquivo extra: {0}" -f $_.Name)
-            Remove-Item -LiteralPath $_.FullName -Force -ErrorAction Stop
-        }
+    if (-not (Test-Path -LiteralPath $tempOutputExe)) {
+        throw ("O publish terminou, mas o EXE nao foi localizado em '{0}'." -f $tempOutputExe)
     }
+
+    Write-Log "INFO" "Copiando EXE final sem apagar dados do cofre em dist..."
+    Copy-Item -LiteralPath $tempOutputExe -Destination $outputExe -Force -ErrorAction Stop
+
+    Write-Log "INFO" "Removendo pasta temporaria de publish..."
+    Remove-Item -LiteralPath $tempPublishDir -Recurse -Force -ErrorAction Stop
 
     if (Test-Path -LiteralPath $outputExe) {
         Write-Log "INFO" "Build concluido com sucesso."

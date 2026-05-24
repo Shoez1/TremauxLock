@@ -42,9 +42,9 @@ namespace TremauxLock
 
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            g.PixelOffsetMode = PixelOffsetMode.Default;
 
-            RectangleF bounds = new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f);
+            RectangleF bounds = new RectangleF(0, 0, Width - 1f, Height - 1f);
             using var path = AppTheme.CreateRoundedRectangle(bounds, AppTheme.RadiusBadge);
             using var fillBrush = new SolidBrush(FillColor);
             using var borderPen = new Pen(BorderColor, 1f);
@@ -54,10 +54,10 @@ namespace TremauxLock
             int textLeft = 12;
             if (ShowDot)
             {
-                using var glowBrush = new SolidBrush(Color.FromArgb(58, ForeColor));
                 using var dotBrush = new SolidBrush(ForeColor);
-                g.FillEllipse(glowBrush, 9, (Height / 2) - 5, 10, 10);
-                g.FillEllipse(dotBrush, 11, (Height / 2) - 3, 6, 6);
+                using var dotBorder = new Pen(Color.FromArgb(180, ForeColor), 1f);
+                g.FillEllipse(dotBrush, 11, (Height / 2) - 4, 8, 8);
+                g.DrawEllipse(dotBorder, 11, (Height / 2) - 4, 8, 8);
                 textLeft = 24;
             }
 
@@ -68,7 +68,11 @@ namespace TremauxLock
                 Font,
                 textRect,
                 ForeColor,
-                TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine);
+                TextFormatFlags.Left |
+                TextFormatFlags.VerticalCenter |
+                TextFormatFlags.EndEllipsis |
+                TextFormatFlags.SingleLine |
+                TextFormatFlags.NoPadding);
         }
     }
 }

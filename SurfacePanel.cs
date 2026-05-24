@@ -55,11 +55,11 @@ namespace TremauxLock
             }
 
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-            e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
-            e.Graphics.CompositingQuality = CompositingQuality.HighQuality;
+            e.Graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
+            e.Graphics.PixelOffsetMode = PixelOffsetMode.Default;
+            e.Graphics.CompositingQuality = CompositingQuality.HighSpeed;
 
-            RectangleF bounds = new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f);
+            RectangleF bounds = new RectangleF(0, 0, Width - 1f, Height - 1f);
             using Brush fillBrush = CreateFillBrush(bounds);
             using Pen borderPen = new Pen(BorderColor, BorderThickness);
 

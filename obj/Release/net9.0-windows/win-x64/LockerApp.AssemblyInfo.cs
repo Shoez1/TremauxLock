@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TremauxLock")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bb822ea13a9a3321831f0d03fc81d126eb528808")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+25ce12d08a8a4c9fb6c21ab5c6b28ad59f29a436")]
 [assembly: System.Reflection.AssemblyProductAttribute("TremauxLock")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TremauxLock")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
