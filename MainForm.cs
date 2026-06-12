@@ -14,7 +14,7 @@ namespace TremauxLock
         private readonly VaultService vaultService;
         private readonly System.Windows.Forms.Timer unlockCooldownTimer;
 
-        private readonly Panel scrollHost;
+        private readonly BufferedPanel scrollHost;
         private readonly TableLayoutPanel layoutRoot;
         private readonly Label lblEyebrow;
         private readonly Label lblTitle;
@@ -55,6 +55,12 @@ namespace TremauxLock
             FormBorderStyle = FormBorderStyle.Sizable;
             MaximizeBox = true;
             MinimizeBox = true;
+            SetStyle(
+                ControlStyles.AllPaintingInWmPaint
+                | ControlStyles.OptimizedDoubleBuffer
+                | ControlStyles.ResizeRedraw
+                | ControlStyles.UserPaint,
+                true);
             DoubleBuffered = true;
             ClientSize = new Size(760, 660);
             MinimumSize = new Size(620, 540);
@@ -70,11 +76,11 @@ namespace TremauxLock
             {
             }
 
-            scrollHost = new Panel
+            scrollHost = new BufferedPanel
             {
                 Dock = DockStyle.Fill,
                 AutoScroll = true,
-                BackColor = Color.Transparent
+                BackColor = AppTheme.BackgroundPrimary
             };
 
             layoutRoot = new TableLayoutPanel
@@ -85,7 +91,7 @@ namespace TremauxLock
                 Padding = new Padding(24, 22, 24, 20),
                 ColumnCount = 1,
                 RowCount = 7,
-                BackColor = Color.Transparent
+                BackColor = AppTheme.BackgroundPrimary
             };
 
             for (int index = 0; index < layoutRoot.RowCount; index++)
@@ -101,7 +107,7 @@ namespace TremauxLock
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
                 RowCount = 1,
-                BackColor = Color.Transparent
+                BackColor = AppTheme.CardFill
             };
             headerGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 62f));
             headerGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 38f));
@@ -111,7 +117,7 @@ namespace TremauxLock
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
                 RowCount = 3,
-                BackColor = Color.Transparent
+                BackColor = AppTheme.CardFill
             };
             titleStack.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             titleStack.RowStyles.Add(new RowStyle(SizeType.AutoSize));
@@ -121,6 +127,7 @@ namespace TremauxLock
             {
                 Text = "LOCAL VAULT / WINDOWS / AES-GCM",
                 AutoSize = true,
+                BackColor = AppTheme.CardFill,
                 ForeColor = AppTheme.HackerCyan,
                 Font = AppTheme.CreateCodeFont(8.5f, FontStyle.Bold),
                 Margin = new Padding(0, 0, 0, 6)
@@ -130,6 +137,7 @@ namespace TremauxLock
             {
                 Text = "TremauxLock",
                 AutoSize = true,
+                BackColor = AppTheme.CardFill,
                 ForeColor = AppTheme.TextPrimary,
                 Font = AppTheme.CreateDisplayFont(21f),
                 Margin = new Padding(0, 0, 0, 5)
@@ -139,6 +147,7 @@ namespace TremauxLock
             {
                 AutoSize = false,
                 Dock = DockStyle.Fill,
+                BackColor = AppTheme.CardFill,
                 ForeColor = AppTheme.TextSecondary,
                 Font = AppTheme.CreateBodyFont(10f),
                 TextAlign = ContentAlignment.TopLeft
@@ -153,7 +162,7 @@ namespace TremauxLock
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
                 RowCount = 4,
-                BackColor = Color.Transparent,
+                BackColor = AppTheme.CardFill,
                 Padding = new Padding(10, 2, 0, 0)
             };
             statusStack.RowStyles.Add(new RowStyle(SizeType.Absolute, 34f));
@@ -190,6 +199,7 @@ namespace TremauxLock
             {
                 Text = "Local",
                 AutoSize = true,
+                BackColor = AppTheme.CardFill,
                 ForeColor = AppTheme.TextSecondary,
                 Font = AppTheme.CreateBodyFont(8.75f, FontStyle.Bold),
                 Dock = DockStyle.Top,
@@ -224,7 +234,7 @@ namespace TremauxLock
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
                 RowCount = 2,
-                BackColor = Color.Transparent
+                BackColor = AppTheme.CardFill
             };
             pathStack.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             pathStack.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
@@ -241,6 +251,7 @@ namespace TremauxLock
                 AutoSize = false,
                 Height = 28,
                 Dock = DockStyle.Top,
+                BackColor = AppTheme.CardFill,
                 ForeColor = AppTheme.TextPrimary,
                 Font = AppTheme.CreateTitleFont(12f),
                 TextAlign = ContentAlignment.MiddleLeft
@@ -285,7 +296,7 @@ namespace TremauxLock
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
                 RowCount = 2,
-                BackColor = Color.Transparent
+                BackColor = AppTheme.CardFill
             };
             fileStack.RowStyles.Add(new RowStyle(SizeType.Absolute, 34f));
             fileStack.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
@@ -299,6 +310,7 @@ namespace TremauxLock
                 Height = 22,
                 Dock = DockStyle.Top,
                 Visible = false,
+                BackColor = AppTheme.BackgroundPrimary,
                 ForeColor = AppTheme.HackerYellow,
                 Font = AppTheme.CreateBodyFont(9f, FontStyle.Bold),
                 TextAlign = ContentAlignment.MiddleLeft,
@@ -309,6 +321,7 @@ namespace TremauxLock
             {
                 Visible = false,
                 Height = 8,
+                BackColor = AppTheme.BackgroundPrimary,
                 Style = ProgressBarStyle.Continuous,
                 Dock = DockStyle.Top,
                 Margin = new Padding(2, 0, 2, 12)
@@ -322,7 +335,7 @@ namespace TremauxLock
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Margin = new Padding(0, 4, 0, 8),
                 Padding = new Padding(0),
-                BackColor = Color.Transparent
+                BackColor = AppTheme.BackgroundPrimary
             };
 
             btnFolder = new HackerButton
@@ -363,6 +376,7 @@ namespace TremauxLock
             lblFooter = new Label
             {
                 Text = "TremauxLock protege apenas a pasta private escolhida pelo usuario.",
+                BackColor = AppTheme.BackgroundPrimary,
                 ForeColor = AppTheme.TextMuted,
                 Font = AppTheme.CreateBodyFont(8.25f),
                 AutoSize = true,
@@ -386,7 +400,11 @@ namespace TremauxLock
                 int width = scrollHost.ClientSize.Width;
                 if (width > 0)
                 {
-                    layoutRoot.Width = width;
+                    int targetWidth = Math.Max(0, width - SystemInformation.VerticalScrollBarWidth);
+                    if (layoutRoot.Width != targetWidth)
+                    {
+                        layoutRoot.Width = targetWidth;
+                    }
                 }
             }
 
@@ -396,14 +414,22 @@ namespace TremauxLock
                 SyncLayoutRootWidth();
                 RefreshOverview();
             };
-            Activated += (_, _) => RefreshOverview();
             Shown += (_, _) => SyncLayoutRootWidth();
-            Paint += MainForm_Paint;
         }
 
         protected override void OnPaintBackground(PaintEventArgs e)
         {
             Rectangle bounds = ClientRectangle;
+            if (bounds.Width <= 0 || bounds.Height <= 0)
+            {
+                return;
+            }
+
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            e.Graphics.CompositingQuality = CompositingQuality.HighQuality;
+
             using var brush = new LinearGradientBrush(
                 bounds,
                 Color.FromArgb(12, 17, 26),
@@ -413,31 +439,27 @@ namespace TremauxLock
 
             using var glow = new LinearGradientBrush(
                 new Rectangle(0, 0, Math.Max(1, Width), Math.Max(1, Height / 2)),
-                Color.FromArgb(18, AppTheme.HackerBlue),
+                Color.FromArgb(14, AppTheme.HackerBlue),
                 Color.FromArgb(0, AppTheme.HackerBlue),
                 LinearGradientMode.ForwardDiagonal);
             e.Graphics.FillRectangle(glow, 0, 0, Width, Height / 2);
 
-            using var gridPen = new Pen(Color.FromArgb(7, 255, 255, 255), 1f);
-            for (int x = 0; x < Width; x += 56)
-            {
-                e.Graphics.DrawLine(gridPen, x, 0, x, Height);
-            }
-
-            for (int y = 0; y < Height; y += 56)
-            {
-                e.Graphics.DrawLine(gridPen, 0, y, Width, y);
-            }
-        }
-
-        private void MainForm_Paint(object? sender, PaintEventArgs e)
-        {
             using var line = new LinearGradientBrush(
                 new Rectangle(0, 0, Math.Max(1, Width), 3),
                 AppTheme.HackerCyan,
                 AppTheme.HackerBlue,
                 LinearGradientMode.Horizontal);
             e.Graphics.FillRectangle(line, 0, 0, Width, 3);
+        }
+
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                CreateParams cp = base.CreateParams;
+                cp.ExStyle |= 0x02000000;
+                return cp;
+            }
         }
 
         private static VaultCard CreateCard(int height, Padding padding)
@@ -460,6 +482,7 @@ namespace TremauxLock
             {
                 AutoSize = false,
                 Dock = DockStyle.Fill,
+                BackColor = AppTheme.CardFill,
                 ForeColor = AppTheme.TextPrimary,
                 Font = AppTheme.CreateBodyFont(9.25f, FontStyle.Bold),
                 TextAlign = ContentAlignment.MiddleLeft,
@@ -578,6 +601,8 @@ namespace TremauxLock
 
             SetBusy(true, useRecoveryKey ? "Validando chave..." : "Validando senha...");
             var progress = new Progress<VaultProgress>(UpdateProgress);
+            string? alertMessage = null;
+            MessageBoxIcon alertIcon = MessageBoxIcon.Information;
 
             try
             {
@@ -587,33 +612,38 @@ namespace TremauxLock
 
                 failedUnlockAttempts = 0;
                 unlockCooldownUntilUtc = DateTime.MinValue;
-                RefreshOverview();
 
-                string message = $"Cofre restaurado.\n\nArquivos: {result.FileCount}\nVolume: {VaultCrypto.FormatSize(result.TotalBytes)}";
+                alertMessage = $"Cofre restaurado.\n\nArquivos: {result.FileCount}\nVolume: {VaultCrypto.FormatSize(result.TotalBytes)}";
                 if (!string.IsNullOrWhiteSpace(result.BackupWarning))
                 {
-                    message += $"\n\nAviso:\n{result.BackupWarning}";
+                    alertMessage += $"\n\nAviso:\n{result.BackupWarning}";
                 }
-
-                MessageBox.Show(message, "TremauxLock", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (VaultAuthenticationException ex)
             {
-                RegisterUnlockFailure(ex.Message);
+                alertMessage = RegisterUnlockFailure(ex.Message);
+                alertIcon = MessageBoxIcon.Warning;
             }
             catch (VaultIntegrityException ex)
             {
-                MessageBox.Show(ex.Message, "TremauxLock", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                alertMessage = ex.Message;
+                alertIcon = MessageBoxIcon.Error;
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "TremauxLock", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                alertMessage = ex.Message;
+                alertIcon = MessageBoxIcon.Error;
             }
             finally
             {
                 dialog.ClearSecret();
                 SetBusy(false, string.Empty);
                 RefreshOverview();
+            }
+
+            if (!string.IsNullOrWhiteSpace(alertMessage))
+            {
+                MessageBox.Show(alertMessage, "TremauxLock", MessageBoxButtons.OK, alertIcon);
             }
         }
 
@@ -639,90 +669,98 @@ namespace TremauxLock
                 return;
             }
 
-            bool cooldownActive = overview.State == VaultState.Locked && DateTime.UtcNow < unlockCooldownUntilUtc;
-            bool recoveryEnabled = !isBusy && overview.State == VaultState.Locked && !cooldownActive;
-
-            btnMain.Enabled = !isBusy && !cooldownActive;
-            btnRecovery.Enabled = recoveryEnabled;
-            btnRecovery.Visible = overview.State == VaultState.Locked;
-            btnFolder.Enabled = !isBusy;
-
-            lblCountMetric.Text = $"Arquivos: {overview.FileCount}";
-            lblSizeMetric.Text = $"Volume: {VaultCrypto.FormatSize(overview.TotalBytes)}";
-
-            switch (overview.State)
+            layoutRoot.SuspendLayout();
+            try
             {
-                case VaultState.Empty:
-                    lblTitle.Text = "Cofre pronto";
-                    lblSubtitle.Text = "Adicione arquivos na pasta private. Depois, bloqueie para guardar tudo em formato criptografado.";
-                    ApplyStatusBadge("Pronto", AppTheme.HackerCyan, Color.FromArgb(11, 42, 50), Color.FromArgb(68, 184, 210));
-                    lblStateMetric.Text = "Estado: aguardando arquivos";
-                    lblPathCaption.Text = "Pasta de trabalho";
-                    txtPath.Text = overview.WorkingFolderPath;
-                    btnFolder.Text = "Abrir private";
-                    btnMain.Text = "Atualizar";
-                    btnMain.ButtonStyle = HackerButtonStyle.Secondary;
-                    lblFilesHint.Text = "Coloque os arquivos na pasta private para iniciar.";
-                    lstFiles.Visible = false;
-                    lblFilesHint.Visible = true;
-                    break;
+                bool cooldownActive = overview.State == VaultState.Locked && DateTime.UtcNow < unlockCooldownUntilUtc;
+                bool recoveryEnabled = !isBusy && overview.State == VaultState.Locked && !cooldownActive;
 
-                case VaultState.Unlocked:
-                    lblTitle.Text = "Cofre aberto";
-                    lblSubtitle.Text = "Os arquivos estao visiveis no Windows. Bloqueie quando terminar para proteger o conteudo.";
-                    ApplyStatusBadge("Aberto", AppTheme.HackerGreen, Color.FromArgb(13, 48, 34), Color.FromArgb(67, 190, 128));
-                    lblStateMetric.Text = "Estado: acesso liberado";
-                    lblPathCaption.Text = "Pasta de trabalho";
-                    txtPath.Text = overview.WorkingFolderPath;
-                    btnFolder.Text = "Abrir private";
-                    btnMain.Text = "Bloquear cofre";
-                    btnMain.ButtonStyle = HackerButtonStyle.Primary;
-                    FillFileList();
-                    break;
+                btnMain.Enabled = !isBusy && !cooldownActive;
+                btnRecovery.Enabled = recoveryEnabled;
+                btnRecovery.Visible = overview.State == VaultState.Locked;
+                btnFolder.Enabled = !isBusy;
 
-                case VaultState.Locked:
-                    lblTitle.Text = "Cofre protegido";
-                    lblSubtitle.Text = "O conteudo esta criptografado. Use a senha ou a chave de recuperacao para restaurar.";
-                    if (cooldownActive)
-                    {
-                        int seconds = Math.Max(1, (int)Math.Ceiling((unlockCooldownUntilUtc - DateTime.UtcNow).TotalSeconds));
-                        ApplyStatusBadge($"Aguarde {seconds}s", AppTheme.HackerYellow, Color.FromArgb(52, 40, 13), Color.FromArgb(190, 150, 48));
-                        lblStateMetric.Text = "Estado: pausa temporaria";
-                    }
-                    else
-                    {
-                        ApplyStatusBadge("Protegido", AppTheme.HackerYellow, Color.FromArgb(52, 40, 13), Color.FromArgb(190, 150, 48));
-                        lblStateMetric.Text = "Estado: criptografado";
-                    }
+                lblCountMetric.Text = $"Arquivos: {overview.FileCount}";
+                lblSizeMetric.Text = $"Volume: {VaultCrypto.FormatSize(overview.TotalBytes)}";
 
-                    lblPathCaption.Text = "Pasta da aplicacao";
-                    txtPath.Text = vaultService.ApplicationDirectory;
-                    btnFolder.Text = "Abrir pasta";
-                    btnMain.Text = cooldownActive ? "Aguarde..." : "Desbloquear";
-                    btnMain.ButtonStyle = HackerButtonStyle.Primary;
-                    lblFilesHint.Text = "Lista protegida. Desbloqueie o cofre para ver os nomes dos arquivos.";
-                    lstFiles.Visible = false;
-                    lblFilesHint.Visible = true;
-                    break;
+                switch (overview.State)
+                {
+                    case VaultState.Empty:
+                        lblTitle.Text = "Cofre pronto";
+                        lblSubtitle.Text = "Adicione arquivos na pasta private. Depois, bloqueie para guardar tudo em formato criptografado.";
+                        ApplyStatusBadge("Pronto", AppTheme.HackerCyan, Color.FromArgb(11, 42, 50), Color.FromArgb(68, 184, 210));
+                        lblStateMetric.Text = "Estado: aguardando arquivos";
+                        lblPathCaption.Text = "Pasta de trabalho";
+                        txtPath.Text = overview.WorkingFolderPath;
+                        btnFolder.Text = "Abrir private";
+                        btnMain.Text = "Atualizar";
+                        btnMain.ButtonStyle = HackerButtonStyle.Secondary;
+                        lblFilesHint.Text = "Coloque os arquivos na pasta private para iniciar.";
+                        lstFiles.Visible = false;
+                        lblFilesHint.Visible = true;
+                        break;
 
-                default:
-                    lblTitle.Text = "Revisao necessaria";
-                    lblSubtitle.Text = "As pastas do cofre estao em conflito. Confira private, private.locked e private.vault.json.";
-                    ApplyStatusBadge("Revisar", AppTheme.HackerRed, Color.FromArgb(58, 24, 32), Color.FromArgb(205, 80, 96));
-                    lblStateMetric.Text = "Estado: estrutura inconsistente";
-                    lblPathCaption.Text = "Diretorio";
-                    txtPath.Text = vaultService.ApplicationDirectory;
-                    btnFolder.Text = "Abrir pasta";
-                    btnMain.Text = "Atualizar";
-                    btnMain.ButtonStyle = HackerButtonStyle.Warning;
-                    lblFilesHint.Text = "Corrija a estrutura antes de continuar.";
-                    lstFiles.Visible = false;
-                    lblFilesHint.Visible = true;
-                    break;
+                    case VaultState.Unlocked:
+                        lblTitle.Text = "Cofre aberto";
+                        lblSubtitle.Text = "Os arquivos estao visiveis no Windows. Bloqueie quando terminar para proteger o conteudo.";
+                        ApplyStatusBadge("Aberto", AppTheme.HackerGreen, Color.FromArgb(13, 48, 34), Color.FromArgb(67, 190, 128));
+                        lblStateMetric.Text = "Estado: acesso liberado";
+                        lblPathCaption.Text = "Pasta de trabalho";
+                        txtPath.Text = overview.WorkingFolderPath;
+                        btnFolder.Text = "Abrir private";
+                        btnMain.Text = "Bloquear cofre";
+                        btnMain.ButtonStyle = HackerButtonStyle.Primary;
+                        FillFileList();
+                        break;
+
+                    case VaultState.Locked:
+                        lblTitle.Text = "Cofre protegido";
+                        lblSubtitle.Text = "O conteudo esta criptografado. Use a senha ou a chave de recuperacao para restaurar.";
+                        if (cooldownActive)
+                        {
+                            int seconds = Math.Max(1, (int)Math.Ceiling((unlockCooldownUntilUtc - DateTime.UtcNow).TotalSeconds));
+                            ApplyStatusBadge($"Aguarde {seconds}s", AppTheme.HackerYellow, Color.FromArgb(52, 40, 13), Color.FromArgb(190, 150, 48));
+                            lblStateMetric.Text = "Estado: pausa temporaria";
+                        }
+                        else
+                        {
+                            ApplyStatusBadge("Protegido", AppTheme.HackerYellow, Color.FromArgb(52, 40, 13), Color.FromArgb(190, 150, 48));
+                            lblStateMetric.Text = "Estado: criptografado";
+                        }
+
+                        lblPathCaption.Text = "Pasta da aplicacao";
+                        txtPath.Text = vaultService.ApplicationDirectory;
+                        btnFolder.Text = "Abrir pasta";
+                        btnMain.Text = cooldownActive ? "Aguarde..." : "Desbloquear";
+                        btnMain.ButtonStyle = HackerButtonStyle.Primary;
+                        lblFilesHint.Text = "Lista protegida. Desbloqueie o cofre para ver os nomes dos arquivos.";
+                        lstFiles.Visible = false;
+                        lblFilesHint.Visible = true;
+                        break;
+
+                    default:
+                        lblTitle.Text = "Revisao necessaria";
+                        lblSubtitle.Text = "As pastas do cofre estao em conflito. Confira private, private.locked e private.vault.json.";
+                        ApplyStatusBadge("Revisar", AppTheme.HackerRed, Color.FromArgb(58, 24, 32), Color.FromArgb(205, 80, 96));
+                        lblStateMetric.Text = "Estado: estrutura inconsistente";
+                        lblPathCaption.Text = "Diretorio";
+                        txtPath.Text = vaultService.ApplicationDirectory;
+                        btnFolder.Text = "Abrir pasta";
+                        btnMain.Text = "Atualizar";
+                        btnMain.ButtonStyle = HackerButtonStyle.Warning;
+                        lblFilesHint.Text = "Corrija a estrutura antes de continuar.";
+                        lstFiles.Visible = false;
+                        lblFilesHint.Visible = true;
+                        break;
+                }
+
+                ResizeStatusBadge();
+                UpdateProgressUi(overview.State);
             }
-
-            ResizeStatusBadge();
-            UpdateProgressUi(overview.State);
+            finally
+            {
+                layoutRoot.ResumeLayout(true);
+            }
         }
 
         private void ApplyStatusBadge(string text, Color fore, Color fill, Color border)
@@ -741,28 +779,36 @@ namespace TremauxLock
 
         private void FillFileList()
         {
+            lstFiles.BeginUpdate();
             lstFiles.Items.Clear();
-            string[] allFiles = vaultService.GetWorkingFiles();
-            string[] files = allFiles.Take(40).ToArray();
-
-            foreach (string file in files)
+            try
             {
-                string relativePath = Path.GetRelativePath(vaultService.WorkingFolderPath, file);
-                long size = new FileInfo(file).Length;
-                lstFiles.Items.Add($"{relativePath}   |   {VaultCrypto.FormatSize(size)}");
+                string[] allFiles = vaultService.GetWorkingFiles();
+                string[] files = allFiles.Take(40).ToArray();
+
+                foreach (string file in files)
+                {
+                    string relativePath = Path.GetRelativePath(vaultService.WorkingFolderPath, file);
+                    long size = new FileInfo(file).Length;
+                    lstFiles.Items.Add($"{relativePath}   |   {VaultCrypto.FormatSize(size)}");
+                }
+
+                if (allFiles.Length > files.Length)
+                {
+                    lstFiles.Items.Add($"... e mais {allFiles.Length - files.Length} arquivo(s)");
+                }
+
+                bool hasFiles = lstFiles.Items.Count > 0;
+                lstFiles.Visible = hasFiles;
+                lblFilesHint.Visible = !hasFiles;
+                if (!hasFiles)
+                {
+                    lblFilesHint.Text = "Nenhum arquivo encontrado na pasta private.";
+                }
             }
-
-            if (allFiles.Length > files.Length)
+            finally
             {
-                lstFiles.Items.Add($"... e mais {allFiles.Length - files.Length} arquivo(s)");
-            }
-
-            bool hasFiles = lstFiles.Items.Count > 0;
-            lstFiles.Visible = hasFiles;
-            lblFilesHint.Visible = !hasFiles;
-            if (!hasFiles)
-            {
-                lblFilesHint.Text = "Nenhum arquivo encontrado na pasta private.";
+                lstFiles.EndUpdate();
             }
         }
 
@@ -810,6 +856,7 @@ namespace TremauxLock
                 lastProgressCurrent = 0;
                 lastProgressTotal = 1;
                 progressText = statusText;
+                ApplyOverviewToUi();
             }
             else if (DateTime.UtcNow >= unlockCooldownUntilUtc)
             {
@@ -817,8 +864,6 @@ namespace TremauxLock
                 lastProgressCurrent = 0;
                 lastProgressTotal = 1;
             }
-
-            ApplyOverviewToUi();
         }
 
         private void UpdateProgress(VaultProgress progress)
@@ -832,7 +877,18 @@ namespace TremauxLock
             ApplyOverviewToUi();
         }
 
-        private void RegisterUnlockFailure(string message)
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                unlockCooldownTimer.Stop();
+                unlockCooldownTimer.Dispose();
+            }
+
+            base.Dispose(disposing);
+        }
+
+        private string RegisterUnlockFailure(string message)
         {
             failedUnlockAttempts++;
 
@@ -841,18 +897,10 @@ namespace TremauxLock
                 failedUnlockAttempts = 0;
                 unlockCooldownUntilUtc = DateTime.UtcNow.AddSeconds(15);
                 unlockCooldownTimer.Start();
-                ApplyOverviewToUi();
-
-                MessageBox.Show(
-                    $"{message}\n\nNovas tentativas foram pausadas por 15 segundos.",
-                    "TremauxLock",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
-                return;
+                return $"{message}\n\nNovas tentativas foram pausadas por 15 segundos.";
             }
 
-            ApplyOverviewToUi();
-            MessageBox.Show(message, "TremauxLock", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return message;
         }
 
         private void RefreshCooldownState()

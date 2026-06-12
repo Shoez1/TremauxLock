@@ -42,7 +42,8 @@ namespace TremauxLock
 
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            g.PixelOffsetMode = PixelOffsetMode.Default;
+            g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            g.CompositingQuality = CompositingQuality.HighQuality;
 
             RectangleF bounds = new RectangleF(0, 0, Width - 1f, Height - 1f);
             using var path = AppTheme.CreateRoundedRectangle(bounds, AppTheme.RadiusBadge);

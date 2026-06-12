@@ -5,12 +5,15 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+$OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 
 $projectRoot = $PSScriptRoot
 $projectPath = Join-Path $projectRoot $Project
 $logFile = Join-Path $projectRoot "build-exe.log"
+$utf8NoBom = [System.Text.UTF8Encoding]::new($false)
 
-[System.IO.File]::WriteAllText($logFile, "")
+[System.IO.File]::WriteAllText($logFile, "", $utf8NoBom)
 
 function Write-Log {
     param(
@@ -20,7 +23,7 @@ function Write-Log {
 
     $line = "[{0}] {1}" -f $Level, $Message
     Write-Host $line
-    Add-Content -Path $logFile -Value $line
+    [System.IO.File]::AppendAllText($logFile, $line + [Environment]::NewLine, $utf8NoBom)
 }
 
 function Invoke-And-Log {
@@ -31,7 +34,7 @@ function Invoke-And-Log {
     & $Action 2>&1 | ForEach-Object {
         $text = $_.ToString()
         Write-Host $text
-        Add-Content -Path $logFile -Value $text
+        [System.IO.File]::AppendAllText($logFile, $text + [Environment]::NewLine, $utf8NoBom)
     }
 }
 

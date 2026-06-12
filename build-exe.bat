@@ -2,6 +2,7 @@
 setlocal EnableExtensions
 
 cd /d "%~dp0"
+chcp 65001 >nul
 
 set "NO_PAUSE="
 if /i "%~1"=="--no-pause" (
