@@ -140,6 +140,14 @@ namespace TremauxLock
 
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public int MaxLength
+        {
+            get => txtInput.MaxLength;
+            set => txtInput.MaxLength = value;
+        }
+
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool UseCodeStyle
         {
             get => useCodeStyle;

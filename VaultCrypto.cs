@@ -39,7 +39,7 @@ namespace TremauxLock
                     inputPath,
                     FileMode.Open,
                     FileAccess.Read,
-                    FileShare.Read,
+                    FileShare.None,
                     StreamBufferSize,
                     FileOptions.SequentialScan);
 
@@ -49,9 +49,10 @@ namespace TremauxLock
                     FileAccess.Write,
                     FileShare.None,
                     StreamBufferSize,
-                    FileOptions.SequentialScan);
+                    FileOptions.SequentialScan | FileOptions.WriteThrough);
 
                 EncryptStream(input, output, masterKey, relativePath);
+                output.Flush(true);
             }
             catch
             {
@@ -84,9 +85,10 @@ namespace TremauxLock
                         FileAccess.Write,
                         FileShare.None,
                         StreamBufferSize,
-                        FileOptions.SequentialScan);
+                        FileOptions.SequentialScan | FileOptions.WriteThrough);
 
                     DecryptChunkedStream(input, output, masterKey, relativePath);
+                    output.Flush(true);
                     return;
                 }
 
@@ -96,7 +98,16 @@ namespace TremauxLock
                     byte[] plainBytes = DecryptFileBytes(encryptedBytes, masterKey, relativePath);
                     try
                     {
-                        File.WriteAllBytes(outputPath, plainBytes);
+                        using var output = new FileStream(
+                            outputPath,
+                            FileMode.CreateNew,
+                            FileAccess.Write,
+                            FileShare.None,
+                            StreamBufferSize,
+                            FileOptions.WriteThrough);
+
+                        output.Write(plainBytes);
+                        output.Flush(true);
                     }
                     finally
                     {
@@ -146,12 +157,19 @@ namespace TremauxLock
                     RandomNumberGenerator.Fill(nonce);
 
                     byte[] aad = CreateChunkAad(normalizedPath, chunkIndex, flags, plainLength);
-                    aes.Encrypt(
-                        nonce,
-                        plainBuffer.AsSpan(0, plainLength),
-                        cipherBuffer.AsSpan(0, plainLength),
-                        tag,
-                        aad);
+                    try
+                    {
+                        aes.Encrypt(
+                            nonce,
+                            plainBuffer.AsSpan(0, plainLength),
+                            cipherBuffer.AsSpan(0, plainLength),
+                            tag,
+                            aad);
+                    }
+                    finally
+                    {
+                        CryptographicOperations.ZeroMemory(aad);
+                    }
 
                     chunkHeader[0] = flags;
                     BinaryPrimitives.WriteInt32LittleEndian(chunkHeader.AsSpan(1, sizeof(int)), plainLength);
@@ -227,6 +245,12 @@ namespace TremauxLock
                         throw new VaultIntegrityException("O arquivo criptografado contem bloco com tamanho invalido.");
                     }
 
+                    bool isFinalChunk = (flags & 1) == 1;
+                    if (plainLength == 0 && !isFinalChunk)
+                    {
+                        throw new VaultIntegrityException("O arquivo criptografado contem bloco vazio antes do bloco final.");
+                    }
+
                     ReadExactlyOrThrow(input, nonce, "O arquivo criptografado esta truncado ou invalido.");
                     ReadExactlyOrThrow(input, tag, "O arquivo criptografado esta truncado ou invalido.");
                     ReadExactlyOrThrow(input, cipherBuffer.AsSpan(0, plainLength), "O arquivo criptografado esta truncado ou invalido.");
@@ -234,24 +258,31 @@ namespace TremauxLock
                     byte[] aad = CreateChunkAad(normalizedPath, chunkIndex, flags, plainLength);
                     try
                     {
-                        aes.Decrypt(
-                            nonce,
-                            cipherBuffer.AsSpan(0, plainLength),
-                            tag,
-                            plainBuffer.AsSpan(0, plainLength),
-                            aad);
+                        try
+                        {
+                            aes.Decrypt(
+                                nonce,
+                                cipherBuffer.AsSpan(0, plainLength),
+                                tag,
+                                plainBuffer.AsSpan(0, plainLength),
+                                aad);
+                        }
+                        catch (CryptographicException ex)
+                        {
+                            CryptographicOperations.ZeroMemory(plainBuffer);
+                            throw new VaultIntegrityException("Falha ao validar os dados do cofre. O arquivo pode ter sido alterado.", ex);
+                        }
                     }
-                    catch (CryptographicException ex)
+                    finally
                     {
-                        CryptographicOperations.ZeroMemory(plainBuffer);
-                        throw new VaultIntegrityException("Falha ao validar os dados do cofre. O arquivo pode ter sido alterado.", ex);
+                        CryptographicOperations.ZeroMemory(aad);
                     }
 
                     output.Write(plainBuffer.AsSpan(0, plainLength));
                     CryptographicOperations.ZeroMemory(plainBuffer.AsSpan(0, plainLength));
                     CryptographicOperations.ZeroMemory(cipherBuffer.AsSpan(0, plainLength));
 
-                    sawFinalChunk = (flags & 1) == 1;
+                    sawFinalChunk = isFinalChunk;
                     if (sawFinalChunk && input.Position != input.Length)
                     {
                         throw new VaultIntegrityException("O arquivo criptografado contem dados extras apos o bloco final.");
@@ -276,17 +307,27 @@ namespace TremauxLock
             byte[] tag = new byte[TagSize];
             byte[] aad = Encoding.UTF8.GetBytes(NormalizeRelativePath(relativePath));
 
-            using (var aes = new AesGcm(masterKey, TagSize))
+            try
             {
-                aes.Encrypt(nonce, plainBytes, ciphertext, tag, aad);
-            }
+                using (var aes = new AesGcm(masterKey, TagSize))
+                {
+                    aes.Encrypt(nonce, plainBytes, ciphertext, tag, aad);
+                }
 
-            byte[] output = new byte[FileMagic.Length + nonce.Length + tag.Length + ciphertext.Length];
-            Buffer.BlockCopy(FileMagic, 0, output, 0, FileMagic.Length);
-            Buffer.BlockCopy(nonce, 0, output, FileMagic.Length, nonce.Length);
-            Buffer.BlockCopy(tag, 0, output, FileMagic.Length + nonce.Length, tag.Length);
-            Buffer.BlockCopy(ciphertext, 0, output, FileMagic.Length + nonce.Length + tag.Length, ciphertext.Length);
-            return output;
+                byte[] output = new byte[FileMagic.Length + nonce.Length + tag.Length + ciphertext.Length];
+                Buffer.BlockCopy(FileMagic, 0, output, 0, FileMagic.Length);
+                Buffer.BlockCopy(nonce, 0, output, FileMagic.Length, nonce.Length);
+                Buffer.BlockCopy(tag, 0, output, FileMagic.Length + nonce.Length, tag.Length);
+                Buffer.BlockCopy(ciphertext, 0, output, FileMagic.Length + nonce.Length + tag.Length, ciphertext.Length);
+                return output;
+            }
+            finally
+            {
+                CryptographicOperations.ZeroMemory(nonce);
+                CryptographicOperations.ZeroMemory(ciphertext);
+                CryptographicOperations.ZeroMemory(tag);
+                CryptographicOperations.ZeroMemory(aad);
+            }
         }
 
         public static byte[] DecryptFileBytes(byte[] encryptedBytes, byte[] masterKey, string relativePath)
@@ -340,13 +381,14 @@ namespace TremauxLock
             byte[] nonce = CreateRandomBytes(NonceSize);
             byte[] ciphertext = new byte[masterKey.Length];
             byte[] tag = new byte[TagSize];
+            byte[]? payload = null;
 
             try
             {
                 using var aes = new AesGcm(wrappingKey, TagSize);
                 aes.Encrypt(nonce, masterKey, ciphertext, tag, WrapMagic);
 
-                byte[] payload = new byte[nonce.Length + tag.Length + ciphertext.Length];
+                payload = new byte[nonce.Length + tag.Length + ciphertext.Length];
                 Buffer.BlockCopy(nonce, 0, payload, 0, nonce.Length);
                 Buffer.BlockCopy(tag, 0, payload, nonce.Length, tag.Length);
                 Buffer.BlockCopy(ciphertext, 0, payload, nonce.Length + tag.Length, ciphertext.Length);
@@ -355,6 +397,13 @@ namespace TremauxLock
             finally
             {
                 CryptographicOperations.ZeroMemory(wrappingKey);
+                CryptographicOperations.ZeroMemory(nonce);
+                CryptographicOperations.ZeroMemory(ciphertext);
+                CryptographicOperations.ZeroMemory(tag);
+                if (payload != null)
+                {
+                    CryptographicOperations.ZeroMemory(payload);
+                }
             }
         }
 

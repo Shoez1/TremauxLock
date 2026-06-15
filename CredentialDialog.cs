@@ -13,6 +13,9 @@ namespace TremauxLock
 
     internal sealed class CredentialDialog : Form
     {
+        private const int MaximumPasswordLength = 1024;
+        private const int MaximumRecoveryKeyInputLength = 128;
+
         private readonly CredentialDialogMode mode;
         private readonly Label lblTitle;
         private readonly InputField fieldPassword;
@@ -71,7 +74,8 @@ namespace TremauxLock
                 PlaceholderText = mode == CredentialDialogMode.CreatePassword
                     ? $"Minimo {VaultCrypto.MinimumPasswordLength} caracteres"
                     : "Senha do cofre",
-                UsePassword = mode != CredentialDialogMode.UnlockWithRecoveryKey
+                UsePassword = mode != CredentialDialogMode.UnlockWithRecoveryKey,
+                MaxLength = MaximumPasswordLength
             };
             fieldPassword.Visible = mode != CredentialDialogMode.UnlockWithRecoveryKey;
 
@@ -81,7 +85,8 @@ namespace TremauxLock
                 Width = ClientSize.Width - 48,
                 Caption = "Confirmar senha",
                 PlaceholderText = "Repita a senha",
-                UsePassword = true
+                UsePassword = true,
+                MaxLength = MaximumPasswordLength
             };
             fieldConfirm.Visible = mode == CredentialDialogMode.CreatePassword;
 
@@ -97,7 +102,8 @@ namespace TremauxLock
                 BackColor = AppTheme.InputFill,
                 ForeColor = AppTheme.TextPrimary,
                 Font = AppTheme.CreateCodeFont(10f),
-                PlaceholderText = "Cole ou digite a chave (hex com hifens)"
+                PlaceholderText = "Cole ou digite a chave (hex com hifens)",
+                MaxLength = MaximumRecoveryKeyInputLength
             };
             txtRecovery.Visible = mode == CredentialDialogMode.UnlockWithRecoveryKey;
 

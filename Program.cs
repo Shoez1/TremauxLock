@@ -24,7 +24,7 @@ namespace TremauxLock
             {
                 TryWriteErrorLog(errorLogPath, args.Exception);
                 MessageBox.Show(
-                    $"Falha inesperada: {args.Exception.Message}",
+                    "Falha inesperada. Um registro tecnico foi salvo sem detalhes sensiveis.",
                     "TremauxLock",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
@@ -39,7 +39,7 @@ namespace TremauxLock
                 }
 
                 MessageBox.Show(
-                    $"Falha inesperada: {exception?.Message ?? "Erro desconhecido."}",
+                    "Falha inesperada. Um registro tecnico foi salvo sem detalhes sensiveis.",
                     "TremauxLock",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);

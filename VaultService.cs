@@ -95,6 +95,8 @@ namespace TremauxLock
             {
                 Directory.CreateDirectory(WorkingFolderPath);
             }
+
+            TryHardenKnownVaultPaths();
         }
 
         public VaultOverview GetOverview()
@@ -106,6 +108,7 @@ namespace TremauxLock
             if (!hasUnlockedFolder && !hasLockedFolder && !hasMetadata)
             {
                 Directory.CreateDirectory(WorkingFolderPath);
+                VaultSecurity.TryHardenPath(WorkingFolderPath);
                 hasUnlockedFolder = true;
             }
 
@@ -222,6 +225,7 @@ namespace TremauxLock
             CleanupFile(tempMetadataPath);
 
             Directory.CreateDirectory(tempLockedDirectory);
+            VaultSecurity.TryHardenPath(tempLockedDirectory);
 
             byte[] masterKey = VaultCrypto.CreateMasterKey();
             byte[] passwordSalt = Array.Empty<byte>();
@@ -283,6 +287,7 @@ namespace TremauxLock
                 };
 
                 WriteMetadataFile(tempMetadataPath, metadata);
+                VaultSecurity.TryHardenPath(tempMetadataPath);
 
                 Directory.Move(WorkingFolderPath, plaintextBackupDirectory);
                 movedPlaintextToBackup = true;
@@ -290,6 +295,8 @@ namespace TremauxLock
                 movedLockedIntoPlace = true;
                 File.Move(tempMetadataPath, MetadataPath);
                 movedMetadataIntoPlace = true;
+                VaultSecurity.TryHardenPath(LockedFolderPath);
+                VaultSecurity.TryHardenPath(MetadataPath);
                 TryApplyHiddenPresentation();
 
                 try
@@ -414,6 +421,7 @@ namespace TremauxLock
             {
                 RemoveHiddenPresentation();
                 Directory.CreateDirectory(tempUnlockedDirectory);
+                VaultSecurity.TryHardenPath(tempUnlockedDirectory);
 
                 for (int index = 0; index < encryptedFiles.Length; index++)
                 {
@@ -450,6 +458,7 @@ namespace TremauxLock
 
                 Directory.Move(LockedFolderPath, lockedBackupDirectory);
                 Directory.Move(tempUnlockedDirectory, WorkingFolderPath);
+                VaultSecurity.TryHardenPath(WorkingFolderPath);
                 File.Delete(MetadataPath);
 
                 try
@@ -845,6 +854,13 @@ namespace TremauxLock
             catch
             {
             }
+        }
+
+        private void TryHardenKnownVaultPaths()
+        {
+            VaultSecurity.TryHardenPath(WorkingFolderPath);
+            VaultSecurity.TryHardenPath(LockedFolderPath);
+            VaultSecurity.TryHardenPath(MetadataPath);
         }
 
         private void ApplyHiddenPresentation()
