@@ -20,7 +20,6 @@ namespace TremauxLock
         private readonly Label lblTitle;
         private readonly Label lblSubtitle;
         private readonly StatusBadge statusBadge;
-        private readonly Label lblStateMetric;
         private readonly Label lblCountMetric;
         private readonly Label lblSizeMetric;
         private readonly Label lblPathCaption;
@@ -161,11 +160,10 @@ namespace TremauxLock
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
-                RowCount = 4,
+                RowCount = 3,
                 BackColor = AppTheme.CardFill,
                 Padding = new Padding(10, 2, 0, 0)
             };
-            statusStack.RowStyles.Add(new RowStyle(SizeType.Absolute, 34f));
             statusStack.RowStyles.Add(new RowStyle(SizeType.Absolute, 34f));
             statusStack.RowStyles.Add(new RowStyle(SizeType.Absolute, 34f));
             statusStack.RowStyles.Add(new RowStyle(SizeType.Absolute, 34f));
@@ -179,14 +177,12 @@ namespace TremauxLock
                 Text = "-"
             };
 
-            lblStateMetric = CreateMetricLabel();
             lblCountMetric = CreateMetricLabel();
             lblSizeMetric = CreateMetricLabel();
 
             statusStack.Controls.Add(statusBadge, 0, 0);
-            statusStack.Controls.Add(lblStateMetric, 0, 1);
-            statusStack.Controls.Add(lblCountMetric, 0, 2);
-            statusStack.Controls.Add(lblSizeMetric, 0, 3);
+            statusStack.Controls.Add(lblCountMetric, 0, 1);
+            statusStack.Controls.Add(lblSizeMetric, 0, 2);
 
             headerGrid.Controls.Add(titleStack, 0, 0);
             headerGrid.Controls.Add(statusStack, 1, 0);
@@ -687,9 +683,8 @@ namespace TremauxLock
                 {
                     case VaultState.Empty:
                         lblTitle.Text = "Cofre pronto";
-                        lblSubtitle.Text = "Adicione arquivos na pasta private. Depois, bloqueie para guardar tudo em formato criptografado.";
+                        lblSubtitle.Text = "Adicione arquivos na pasta private.";
                         ApplyStatusBadge("Pronto", AppTheme.HackerCyan, Color.FromArgb(11, 42, 50), Color.FromArgb(68, 184, 210));
-                        lblStateMetric.Text = "Estado: aguardando arquivos";
                         lblPathCaption.Text = "Pasta de trabalho";
                         txtPath.Text = overview.WorkingFolderPath;
                         btnFolder.Text = "Abrir private";
@@ -704,7 +699,6 @@ namespace TremauxLock
                         lblTitle.Text = "Cofre aberto";
                         lblSubtitle.Text = "Os arquivos estao visiveis no Windows. Bloqueie quando terminar para proteger o conteudo.";
                         ApplyStatusBadge("Aberto", AppTheme.HackerGreen, Color.FromArgb(13, 48, 34), Color.FromArgb(67, 190, 128));
-                        lblStateMetric.Text = "Estado: acesso liberado";
                         lblPathCaption.Text = "Pasta de trabalho";
                         txtPath.Text = overview.WorkingFolderPath;
                         btnFolder.Text = "Abrir private";
@@ -720,12 +714,10 @@ namespace TremauxLock
                         {
                             int seconds = Math.Max(1, (int)Math.Ceiling((unlockCooldownUntilUtc - DateTime.UtcNow).TotalSeconds));
                             ApplyStatusBadge($"Aguarde {seconds}s", AppTheme.HackerYellow, Color.FromArgb(52, 40, 13), Color.FromArgb(190, 150, 48));
-                            lblStateMetric.Text = "Estado: pausa temporaria";
                         }
                         else
                         {
                             ApplyStatusBadge("Protegido", AppTheme.HackerYellow, Color.FromArgb(52, 40, 13), Color.FromArgb(190, 150, 48));
-                            lblStateMetric.Text = "Estado: criptografado";
                         }
 
                         lblPathCaption.Text = "Pasta da aplicacao";
@@ -742,7 +734,6 @@ namespace TremauxLock
                         lblTitle.Text = "Revisao necessaria";
                         lblSubtitle.Text = "As pastas do cofre estao em conflito. Confira private, private.locked e private.vault.json.";
                         ApplyStatusBadge("Revisar", AppTheme.HackerRed, Color.FromArgb(58, 24, 32), Color.FromArgb(205, 80, 96));
-                        lblStateMetric.Text = "Estado: estrutura inconsistente";
                         lblPathCaption.Text = "Diretorio";
                         txtPath.Text = vaultService.ApplicationDirectory;
                         btnFolder.Text = "Abrir pasta";
