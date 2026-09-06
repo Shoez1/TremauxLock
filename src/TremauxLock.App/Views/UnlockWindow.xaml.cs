@@ -100,8 +100,8 @@ public partial class UnlockWindow : Window
 
             PasswordPanel.Visibility = Visibility.Visible;
             RecoveryPanel.Visibility = Visibility.Collapsed;
-            TitleBlock.Text = "Desbloquear com Senha";
-            SubtitleBlock.Text = "Digite a senha definida no bloqueio do cofre.";
+            TitleBlock.Text = "Desofuscar com Senha";
+            SubtitleBlock.Text = "Digite a credencial de cifra definida na ativação da ofuscação.";
             PasswordBox.Focus();
         }
         else
@@ -113,8 +113,8 @@ public partial class UnlockWindow : Window
 
             PasswordPanel.Visibility = Visibility.Collapsed;
             RecoveryPanel.Visibility = Visibility.Visible;
-            TitleBlock.Text = "Recuperar Cofre";
-            SubtitleBlock.Text = "Use a chave de 32 caracteres gerada quando o cofre foi bloqueado.";
+            TitleBlock.Text = "Bypass de Emergência";
+            SubtitleBlock.Text = "Insira o token mestre de 32 caracteres gerado no momento da ofuscação.";
             RecoveryBox.Focus();
         }
     }

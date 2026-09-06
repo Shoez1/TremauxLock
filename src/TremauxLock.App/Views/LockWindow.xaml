@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:conv="clr-namespace:TremauxLock.App.Converters"
-        Title="Bloquear Cofre"
+        Title="TremauxLock // Ofuscação de Dados"
         Width="480" SizeToContent="Height"
         MinHeight="360"
         ResizeMode="NoResize"
@@ -33,20 +33,20 @@
 
                 <Border Width="48" Height="48"
                         CornerRadius="24"
-                        Background="{DynamicResource AccentIndigoSoftBrush}"
+                        Background="{DynamicResource CyberCyanSoftBrush}"
                         VerticalAlignment="Center"
                         Margin="0,0,16,0">
-                    <materialDesign:PackIcon Kind="LockOutline"
+                    <materialDesign:PackIcon Kind="ShieldLockOutline"
                                              Width="24" Height="24"
-                                             Foreground="{DynamicResource AccentIndigoBrush}"
+                                             Foreground="{DynamicResource CyberCyanBrush}"
                                              HorizontalAlignment="Center"
                                              VerticalAlignment="Center" />
                 </Border>
 
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock Text="Bloquear Cofre"
+                    <TextBlock Text="Ofuscação Criptográfica"
                                Style="{StaticResource PageTitle}" />
-                    <TextBlock Text="Defina uma senha para criptografar seus arquivos com AES-GCM"
+                    <TextBlock Text="Aplique criptografia militar autenticada AES-256 GCM sobre o payload"
                                Style="{StaticResource SubtitleText}"
                                TextWrapping="Wrap" />
                 </StackPanel>
@@ -61,13 +61,15 @@
 
                     <!-- Header da caixa com botão de gerar senha -->
                     <Grid Margin="0,0,0,10">
-                        <TextBlock Text="Credenciais de Acesso"
+                        <TextBlock Text="CHAVE DE ACESSO"
                                    Style="{StaticResource InfoValue}"
+                                   FontFamily="Consolas, Courier New"
+                                   FontSize="11"
                                    VerticalAlignment="Center" />
                         
                         <Button HorizontalAlignment="Right"
                                 Style="{StaticResource TextLinkButton}"
-                                ToolTip="Gerar uma senha forte automaticamente"
+                                ToolTip="Gerar chave criptográfica aleatória de alta entropia"
                                 Click="GeneratePassword_Click">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="AutoFix"
@@ -83,7 +85,7 @@
 
                     <!-- Campo Senha -->
                     <PasswordBox x:Name="PasswordBox"
-                                 materialDesign:HintAssist.Hint="Senha (mínimo 10 caracteres)"
+                                 materialDesign:HintAssist.Hint="Senha de Cifra (mínimo 10 caracteres)"
                                  materialDesign:HintAssist.IsFloating="True"
                                  Style="{StaticResource MaterialDesignPasswordBox}"
                                  Margin="0,0,0,4"
@@ -124,13 +126,14 @@
                                    x:Name="StrengthLabel"
                                    Style="{StaticResource MaterialDesignCaptionTextBlock}"
                                    FontWeight="SemiBold"
+                                   FontFamily="Consolas, Courier New"
                                    Margin="10,0,0,0"
                                    VerticalAlignment="Center" />
                     </Grid>
 
                     <!-- Campo Confirmação de Senha -->
                     <PasswordBox x:Name="ConfirmBox"
-                                 materialDesign:HintAssist.Hint="Confirme a senha"
+                                 materialDesign:HintAssist.Hint="Confirme a senha de cifra"
                                  materialDesign:HintAssist.IsFloating="True"
                                  Style="{StaticResource MaterialDesignPasswordBox}"
                                  Margin="0,0,0,4"
@@ -149,7 +152,7 @@
                                                      Width="16" Height="16"
                                                      VerticalAlignment="Center"
                                                      Margin="0,0,6,0" />
-                            <TextBlock Text="As senhas digitadas não coincidem"
+                            <TextBlock Text="As senhas de cifra não coincidem"
                                        Foreground="{StaticResource LockedBrush}"
                                        FontSize="12"
                                        VerticalAlignment="Center" />
@@ -187,7 +190,7 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="14" />
-                    <ColumnDefinition Width="1.4*" />
+                    <ColumnDefinition Width="1.5*" />
                 </Grid.ColumnDefinitions>
 
                 <Button Grid.Column="0"
@@ -202,11 +205,11 @@
                         Click="LockConfirm_Click"
                         IsEnabled="False">
                     <StackPanel Orientation="Horizontal">
-                        <materialDesign:PackIcon Kind="ShieldLock"
+                        <materialDesign:PackIcon Kind="LockPattern"
                                                  Width="18" Height="18"
                                                  VerticalAlignment="Center"
                                                  Margin="0,0,8,0" />
-                        <TextBlock Text="Bloquear Cofre" VerticalAlignment="Center" />
+                        <TextBlock Text="Ativar Ofuscação" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
             </Grid>
@@ -214,11 +217,11 @@
         </StackPanel>
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- ── FASE 2: SUCESSO & CHAVE DE RECUPERAÇÃO (ShowRecoveryKey) ──── -->
+        <!-- ── FASE 2: SUCESSO & CHAVE DE BYPASS (ShowRecoveryKey) ──────── -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <StackPanel Visibility="{Binding ShowRecoveryKey, Converter={StaticResource BoolToVis}}">
 
-            <!-- Banner suave de sucesso -->
+            <!-- Banner suave de sucesso com tom cyber -->
             <Border Background="{DynamicResource UnlockedSoftBrush}"
                     BorderBrush="{StaticResource UnlockedBrush}"
                     BorderThickness="1"
@@ -231,25 +234,25 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <materialDesign:PackIcon Kind="CheckCircle"
+                    <materialDesign:PackIcon Kind="CheckDecagram"
                                              Width="28" Height="28"
                                              Foreground="{StaticResource UnlockedBrush}"
                                              VerticalAlignment="Center"
                                              Margin="0,0,12,0" />
 
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <TextBlock Text="Cofre Bloqueado com Sucesso!"
+                        <TextBlock Text="Payload Ofuscado com Sucesso!"
                                    FontWeight="SemiBold"
                                    FontSize="15"
                                    Foreground="{StaticResource UnlockedBrush}" />
-                        <TextBlock Text="Seus arquivos estão protegidos com AES-GCM e chave única."
+                        <TextBlock Text="Arquivos criptografados e convertidos para formato binário .tmx"
                                    Style="{StaticResource SubtitleText}"
                                    FontSize="12" />
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- Card da Chave de Recuperação -->
+            <!-- Card da Chave Mestra de Bypass -->
             <materialDesign:Card UniformCornerRadius="18"
                                  Padding="20"
                                  Margin="0,0,0,20"
@@ -259,10 +262,10 @@
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                         <materialDesign:PackIcon Kind="KeyChain"
                                                  Width="22" Height="22"
-                                                 Foreground="{DynamicResource AccentIndigoBrush}"
+                                                 Foreground="{DynamicResource CyberCyanBrush}"
                                                  VerticalAlignment="Center"
                                                  Margin="0,0,8,0" />
-                        <TextBlock Text="Chave de Recuperação"
+                        <TextBlock Text="Chave Mestra de Bypass"
                                    Style="{StaticResource MaterialDesignSubtitle1TextBlock}"
                                    FontWeight="SemiBold"
                                    VerticalAlignment="Center" />
@@ -272,7 +275,7 @@
                                Style="{StaticResource SubtitleText}"
                                Margin="0,0,0,14"
                                FontSize="12.5">
-                        Guarde esta chave em um local seguro <Bold>fora deste computador</Bold>. Se você esquecer sua senha, ela será o <Bold>único modo</Bold> de restaurar seus dados.
+                        Guarde esta chave em local seguro <Bold>fora deste host</Bold>. Se você esquecer sua senha, este token de bypass será o <Bold>único vetor</Bold> para reverter a ofuscação dos dados.
                     </TextBlock>
 
                     <!-- Caixa da chave -->
@@ -280,7 +283,7 @@
                             Margin="0,0,0,14">
                         <TextBlock Text="{Binding RecoveryKey}"
                                    FontFamily="Consolas, Courier New"
-                                   FontSize="16"
+                                   FontSize="15"
                                    FontWeight="Bold"
                                    TextWrapping="Wrap"
                                    TextAlignment="Center" />
@@ -298,7 +301,7 @@
                                                      VerticalAlignment="Center"
                                                      Margin="0,0,8,0" />
                             <TextBlock x:Name="CopyKeyLabel"
-                                       Text="Copiar Chave para Área de Transferência"
+                                       Text="Copiar Chave Mestra para Clipboard"
                                        VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
@@ -329,7 +332,7 @@
 
             <!-- Botão de Conclusão -->
             <Button Style="{StaticResource PrimaryActionButton}"
-                    Content="Concluir e Voltar"
+                    Content="Concluir e Proteger Payload"
                     Click="Close_Click"
                     HorizontalAlignment="Stretch" />
 
@@ -339,23 +342,25 @@
         <!-- ── OVERLAY DE PROGRESSO SUAVE ───────────────────────────────── -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <Border x:Name="BusyOverlay"
-                Background="#B3000000"
+                Background="#CC000000"
                 CornerRadius="16"
                 Visibility="Collapsed">
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                 <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
                              IsIndeterminate="True"
                              Width="48" Height="48"
-                             Foreground="White" />
-                <TextBlock Text="Criptografando arquivos do cofre..."
+                             Foreground="{DynamicResource CyberCyanBrush}" />
+                <TextBlock Text="Executando cifragem e ofuscação do payload..."
                            Foreground="White"
                            FontWeight="Medium"
-                           FontSize="14"
+                           FontFamily="Consolas, Courier New"
+                           FontSize="13.5"
                            Margin="0,16,0,0"
                            HorizontalAlignment="Center" />
-                <TextBlock Text="Por favor, aguarde alguns instantes"
-                           Foreground="#CCFFFFFF"
-                           FontSize="12"
+                <TextBlock Text="Criptografia AES-256 GCM em andamento"
+                           Foreground="#AAFFFFFF"
+                           FontFamily="Consolas, Courier New"
+                           FontSize="11"
                            Margin="0,4,0,0"
                            HorizontalAlignment="Center" />
             </StackPanel>

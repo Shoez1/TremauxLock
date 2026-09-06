@@ -44,20 +44,20 @@ public partial class MainWindow : Window
             VaultStateKind.Locked => (
                 FindResource("LockedBrush") as Brush ?? Brushes.Red,
                 FindResource("LockedSoftBrush") as Brush ?? Brushes.MistyRose,
-                "🔒",
-                PackIconKind.ShieldLockOutline
+                "🛡️",
+                PackIconKind.ShieldBugOutline
             ),
             VaultStateKind.Inconsistent => (
                 FindResource("InconsistentBrush") as Brush ?? Brushes.Orange,
                 FindResource("InconsistentSoftBrush") as Brush ?? Brushes.Wheat,
                 "⚠️",
-                PackIconKind.AlertCircleOutline
+                PackIconKind.AlertDecagramOutline
             ),
             _ => (
                 FindResource("EmptyBrush") as Brush ?? Brushes.Gray,
                 FindResource("EmptySoftBrush") as Brush ?? Brushes.LightGray,
-                "📂",
-                PackIconKind.FolderOpenOutline
+                "⚡",
+                PackIconKind.CodeJson
             )
         };
 
@@ -66,7 +66,7 @@ public partial class MainWindow : Window
         StatusPillBorder.Background = pillBgBrush;
         HeroStatusIcon.Kind = heroPackIcon;
         HeroStatusIcon.Foreground = dotBrush;
-        Title = $"{icon} TremauxLock — Cofre Local";
+        Title = $"{icon} TremauxLock // Ofuscador Criptográfico";
     }
 
     // ── Button event handlers ──────────────────────────────────────────────

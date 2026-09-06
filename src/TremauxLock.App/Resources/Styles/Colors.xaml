@@ -1,23 +1,28 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- Status colors - tons modernos e suaves -->
+    <!-- Status colors - Paleta Hacking/Cybersecurity moderna e suave -->
+    <!-- Verde Terminal/Matrix suave -->
     <Color x:Key="UnlockedColor">#10B981</Color>
-    <Color x:Key="UnlockedSoftColor">#1510B981</Color>
+    <Color x:Key="UnlockedSoftColor">#2010B981</Color>
     
-    <Color x:Key="LockedColor">#EF4444</Color>
-    <Color x:Key="LockedSoftColor">#15EF4444</Color>
+    <!-- Vermelho Cyber Encrypted -->
+    <Color x:Key="LockedColor">#F43F5E</Color>
+    <Color x:Key="LockedSoftColor">#20F43F5E</Color>
     
+    <!-- Cinza Standby -->
     <Color x:Key="EmptyColor">#64748B</Color>
-    <Color x:Key="EmptySoftColor">#1564748B</Color>
+    <Color x:Key="EmptySoftColor">#1864748B</Color>
     
+    <!-- Âmbar Anomalia -->
     <Color x:Key="InconsistentColor">#F59E0B</Color>
-    <Color x:Key="InconsistentSoftColor">#15F59E0B</Color>
+    <Color x:Key="InconsistentSoftColor">#20F59E0B</Color>
     
-    <!-- Accent colors -->
-    <Color x:Key="AccentIndigo">#6366F1</Color>
-    <Color x:Key="AccentIndigoDark">#4F46E5</Color>
-    <Color x:Key="AccentIndigoSoft">#1A6366F1</Color>
+    <!-- Acentos Cyber Hacking -->
+    <Color x:Key="CyberCyan">#06B6D4</Color>
+    <Color x:Key="CyberCyanSoft">#2006B6D4</Color>
+    <Color x:Key="CyberViolet">#8B5CF6</Color>
+    <Color x:Key="CyberVioletSoft">#208B5CF6</Color>
 
     <SolidColorBrush x:Key="UnlockedBrush" Color="{StaticResource UnlockedColor}" />
     <SolidColorBrush x:Key="UnlockedSoftBrush" Color="{StaticResource UnlockedSoftColor}" />
@@ -31,17 +36,18 @@
     <SolidColorBrush x:Key="InconsistentBrush" Color="{StaticResource InconsistentColor}" />
     <SolidColorBrush x:Key="InconsistentSoftBrush" Color="{StaticResource InconsistentSoftColor}" />
     
-    <SolidColorBrush x:Key="AccentIndigoBrush" Color="{StaticResource AccentIndigo}" />
-    <SolidColorBrush x:Key="AccentIndigoDarkBrush" Color="{StaticResource AccentIndigoDark}" />
-    <SolidColorBrush x:Key="AccentIndigoSoftBrush" Color="{StaticResource AccentIndigoSoft}" />
+    <SolidColorBrush x:Key="CyberCyanBrush" Color="{StaticResource CyberCyan}" />
+    <SolidColorBrush x:Key="CyberCyanSoftBrush" Color="{StaticResource CyberCyanSoft}" />
+    <SolidColorBrush x:Key="CyberVioletBrush" Color="{StaticResource CyberViolet}" />
+    <SolidColorBrush x:Key="CyberVioletSoftBrush" Color="{StaticResource CyberVioletSoft}" />
 
-    <!-- Password strength colors -->
-    <SolidColorBrush x:Key="StrengthWeak" Color="#EF4444" />
+    <!-- Força de senha -->
+    <SolidColorBrush x:Key="StrengthWeak" Color="#F43F5E" />
     <SolidColorBrush x:Key="StrengthFair" Color="#F59E0B" />
     <SolidColorBrush x:Key="StrengthStrong" Color="#10B981" />
 
-    <!-- Neutral soft backgrounds -->
+    <!-- Superfícies sutis -->
     <SolidColorBrush x:Key="SoftBackgroundLight" Color="#F8FAFC" />
-    <SolidColorBrush x:Key="SoftBackgroundDark" Color="#1E293B" />
-    <SolidColorBrush x:Key="SubtleBorderBrush" Color="#1F000000" />
+    <SolidColorBrush x:Key="SoftBackgroundDark" Color="#0B0F17" />
+    <SolidColorBrush x:Key="SubtleBorderBrush" Color="#22FFFFFF" />
 </ResourceDictionary>

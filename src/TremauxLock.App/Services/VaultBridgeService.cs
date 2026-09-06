@@ -8,7 +8,7 @@ namespace TremauxLock.App.Services;
 
 /// <summary>
 /// Ponte entre os ViewModels do WPF e o VaultService do TremauxLock.Core.
-/// Garante que a pasta do cofre 'private' seja sempre resolvida e criada
+/// Garante que o diretório de payload 'private' seja sempre resolvido e criado
 /// exatamente no mesmo diretorio onde o arquivo .exe esta sendo executado.
 /// </summary>
 public sealed class VaultBridgeService
@@ -28,7 +28,7 @@ public sealed class VaultBridgeService
         _inner = new VaultService(appDir);
         _inner.EnsureWorkspace();
         
-        // Garante que a pasta 'private' exista se o cofre nao estiver bloqueado
+        // Garante que a pasta 'private' exista se o payload nao estiver ofuscado
         EnsureWorkingFolderExists();
     }
 
@@ -73,7 +73,7 @@ public sealed class VaultBridgeService
     {
         try
         {
-            // Se o cofre nao esta bloqueado e nem existe metadados de bloqueio,
+            // Se o payload nao esta ofuscado e nem existe metadados de bloqueio,
             // garante a criacao da pasta 'private' ao lado do exe
             if (!Directory.Exists(_inner.LockedFolderPath) && !File.Exists(_inner.MetadataPath))
             {

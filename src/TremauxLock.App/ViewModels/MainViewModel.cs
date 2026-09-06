@@ -45,19 +45,19 @@ public partial class MainViewModel : ObservableObject
 
     public string StatusText => State switch
     {
-        VaultStateKind.Unlocked => "Cofre Aberto",
-        VaultStateKind.Locked => "Cofre Bloqueado",
-        VaultStateKind.Empty => "Cofre Vazio",
-        VaultStateKind.Inconsistent => "Estado Inconsistente",
-        _ => "Desconhecido"
+        VaultStateKind.Unlocked => "DESOFUSCADO // CLEAR",
+        VaultStateKind.Locked => "OFUSCAÇÃO ATIVA [AES-GCM]",
+        VaultStateKind.Empty => "STANDBY // SEM DADOS",
+        VaultStateKind.Inconsistent => "ANOMALIA // INCONSISTENTE",
+        _ => "DESCONHECIDO"
     };
 
     public string StatusSubtext => State switch
     {
-        VaultStateKind.Unlocked => "Seus arquivos estão acessíveis na pasta private",
-        VaultStateKind.Locked => "Seus arquivos estão criptografados e protegidos",
-        VaultStateKind.Empty => "Adicione arquivos à pasta private e bloqueie",
-        VaultStateKind.Inconsistent => "Verifique se há arquivos pendentes",
+        VaultStateKind.Unlocked => "Payload em texto claro acessível na pasta private",
+        VaultStateKind.Locked => "Payload criptografado e ofuscado em private.locked com AES-256 GCM",
+        VaultStateKind.Empty => "Adicione arquivos na pasta private para executar a ofuscação",
+        VaultStateKind.Inconsistent => "Inconsistência detectada entre payload e metadados",
         _ => string.Empty
     };
 

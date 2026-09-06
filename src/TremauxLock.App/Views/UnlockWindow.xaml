@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:conv="clr-namespace:TremauxLock.App.Converters"
-        Title="Desbloquear Cofre"
+        Title="TremauxLock // Desofuscação de Dados"
         Width="460" SizeToContent="Height"
         MinHeight="320"
         ResizeMode="NoResize"
@@ -30,28 +30,28 @@
 
                 <Border Width="48" Height="48"
                         CornerRadius="24"
-                        Background="{DynamicResource UnlockedSoftBrush}"
+                        Background="{DynamicResource CyberCyanSoftBrush}"
                         VerticalAlignment="Center"
                         Margin="0,0,16,0">
-                    <materialDesign:PackIcon Kind="LockOpenVariantOutline"
+                    <materialDesign:PackIcon Kind="ShieldKeyOutline"
                                              Width="24" Height="24"
-                                             Foreground="{StaticResource UnlockedBrush}"
+                                             Foreground="{DynamicResource CyberCyanBrush}"
                                              HorizontalAlignment="Center"
                                              VerticalAlignment="Center" />
                 </Border>
 
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                     <TextBlock x:Name="TitleBlock"
-                               Text="Desbloquear Cofre"
+                               Text="Desofuscar Payload"
                                Style="{StaticResource PageTitle}" />
                     <TextBlock x:Name="SubtitleBlock"
-                               Text="Informe sua credencial para descriptografar os arquivos"
+                               Text="Autentique com a chave para descriptografar os dados"
                                Style="{StaticResource SubtitleText}"
                                TextWrapping="Wrap" />
                 </StackPanel>
             </Grid>
 
-            <!-- Alternador estilo Pill Tab (Senha vs Chave) -->
+            <!-- Alternador estilo Pill Tab (Senha vs Chave Bypass) -->
             <Border Background="{DynamicResource MaterialDesign.Brush.Surface.Variant}"
                     CornerRadius="16"
                     Padding="4"
@@ -75,13 +75,13 @@
                                                      Width="16" Height="16"
                                                      VerticalAlignment="Center"
                                                      Margin="0,0,6,0" />
-                            <TextBlock Text="Senha"
+                            <TextBlock Text="Senha de Cifra"
                                        FontWeight="SemiBold"
                                        VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
 
-                    <!-- Botão Tab Chave de Recuperação -->
+                    <!-- Botão Tab Chave Mestra Bypass -->
                     <Button x:Name="TabRecoveryButton"
                             Grid.Column="1"
                             Style="{StaticResource MaterialDesignFlatButton}"
@@ -89,11 +89,11 @@
                             materialDesign:ButtonAssist.CornerRadius="14"
                             Click="TabRecovery_Click">
                         <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="ShieldKeyOutline"
+                            <materialDesign:PackIcon Kind="KeyChain"
                                                      Width="16" Height="16"
                                                      VerticalAlignment="Center"
                                                      Margin="0,0,6,0" />
-                            <TextBlock Text="Chave de Recuperação"
+                            <TextBlock Text="Chave Bypass"
                                        FontWeight="SemiBold"
                                        VerticalAlignment="Center" />
                         </StackPanel>
@@ -111,7 +111,7 @@
                     <!-- Entrada de Senha -->
                     <StackPanel x:Name="PasswordPanel">
                         <PasswordBox x:Name="PasswordBox"
-                                     materialDesign:HintAssist.Hint="Digite a senha do cofre"
+                                     materialDesign:HintAssist.Hint="Digite a senha de cifra"
                                      materialDesign:HintAssist.IsFloating="True"
                                      Style="{StaticResource MaterialDesignPasswordBox}"
                                      FontSize="14"
@@ -120,10 +120,10 @@
                                      KeyDown="PasswordBox_KeyDown" />
                     </StackPanel>
 
-                    <!-- Entrada de Chave de Recuperação -->
+                    <!-- Entrada de Chave Mestra de Bypass -->
                     <StackPanel x:Name="RecoveryPanel" Visibility="Collapsed">
                         <TextBox x:Name="RecoveryBox"
-                                 materialDesign:HintAssist.Hint="Chave (Ex: XXXX-XXXX-XXXX-...)"
+                                 materialDesign:HintAssist.Hint="Token de Bypass (XXXX-XXXX-...)"
                                  materialDesign:HintAssist.IsFloating="True"
                                  Style="{StaticResource MaterialDesignTextBox}"
                                  FontFamily="Consolas, Courier New"
@@ -131,7 +131,7 @@
                                  Margin="0,0,0,4"
                                  TextChanged="RecoveryBox_TextChanged"
                                  KeyDown="RecoveryBox_KeyDown" />
-                        <TextBlock Text="Cole a chave completa de 32 dígitos gerada no bloqueio"
+                        <TextBlock Text="Cole o token mestre de 32 caracteres gerado no momento da ofuscação"
                                    Style="{StaticResource InfoLabel}"
                                    Margin="0,4,0,0" />
                     </StackPanel>
@@ -154,7 +154,7 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <materialDesign:PackIcon Kind="AlertCircleOutline"
+                    <materialDesign:PackIcon Kind="AlertDecagramOutline"
                                              Width="20" Height="20"
                                              Foreground="{StaticResource LockedBrush}"
                                              VerticalAlignment="Center"
@@ -179,12 +179,12 @@
                     Margin="0,0,0,16"
                     Visibility="Collapsed">
                 <StackPanel Orientation="Horizontal">
-                    <materialDesign:PackIcon Kind="CheckCircle"
+                    <materialDesign:PackIcon Kind="CheckDecagram"
                                              Foreground="{StaticResource UnlockedBrush}"
                                              Width="20" Height="20"
                                              VerticalAlignment="Center"
                                              Margin="0,0,10,0" />
-                    <TextBlock Text="Cofre restaurado e desbloqueado com sucesso!"
+                    <TextBlock Text="Payload desofuscado e restaurado com sucesso!"
                                Foreground="{StaticResource UnlockedBrush}"
                                FontWeight="SemiBold"
                                VerticalAlignment="Center" />
@@ -200,11 +200,13 @@
                 <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
                              IsIndeterminate="True"
                              Width="24" Height="24"
+                             Foreground="{DynamicResource CyberCyanBrush}"
                              Margin="0,0,12,0" />
-                <TextBlock Text="Validando e descriptografando arquivos..."
+                <TextBlock Text="Validando hash e descriptografando payload..."
                            VerticalAlignment="Center"
+                           FontFamily="Consolas, Courier New"
                            FontWeight="Medium"
-                           Opacity="0.8" />
+                           Opacity="0.85" />
             </StackPanel>
 
             <!-- Ações -->
@@ -212,7 +214,7 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="14" />
-                    <ColumnDefinition Width="1.4*" />
+                    <ColumnDefinition Width="1.5*" />
                 </Grid.ColumnDefinitions>
 
                 <Button Grid.Column="0"
@@ -227,11 +229,11 @@
                         Click="Unlock_Click"
                         IsEnabled="False">
                     <StackPanel Orientation="Horizontal">
-                        <materialDesign:PackIcon Kind="LockOpenVariant"
+                        <materialDesign:PackIcon Kind="ShieldKeyOutline"
                                                  Width="18" Height="18"
                                                  VerticalAlignment="Center"
                                                  Margin="0,0,8,0" />
-                        <TextBlock Text="Desbloquear" VerticalAlignment="Center" />
+                        <TextBlock Text="Desofuscar Payload" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
             </Grid>

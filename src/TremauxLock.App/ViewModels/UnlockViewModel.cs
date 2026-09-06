@@ -27,12 +27,12 @@ public partial class UnlockViewModel : ObservableObject
     public bool CanUnlock => !string.IsNullOrWhiteSpace(Secret) && !IsBusy;
 
     public string PromptText => UseRecoveryKey
-        ? "Chave de recuperação"
-        : "Senha do cofre";
+        ? "Chave Mestra de Bypass"
+        : "Senha de Acesso Criptográfico";
 
     public string PlaceholderText => UseRecoveryKey
         ? "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
-        : "Digite sua senha...";
+        : "Digite sua senha de acesso...";
 
     // ── Constructor ────────────────────────────────────────────────────────
     public UnlockViewModel(VaultBridgeService vault)
@@ -46,7 +46,7 @@ public partial class UnlockViewModel : ObservableObject
     {
         ErrorMessage = null;
         IsBusy = true;
-        BusyMessage = "Descriptografando arquivos...";
+        BusyMessage = "Revertendo ofuscação e descriptografando payload...";
 
         try
         {
@@ -62,8 +62,8 @@ public partial class UnlockViewModel : ObservableObject
         catch (VaultAuthenticationException)
         {
             ErrorMessage = UseRecoveryKey
-                ? "Chave de recuperação incorreta. Verifique e tente novamente."
-                : "Senha incorreta. Verifique e tente novamente.";
+                ? "Chave Mestra de Bypass incorreta ou payload corrompido."
+                : "Credencial incorreta. Acesso negado.";
         }
         catch (Exception ex)
         {

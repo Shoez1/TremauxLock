@@ -81,7 +81,7 @@ public partial class LockViewModel : ObservableObject
     {
         ErrorMessage = null;
         IsBusy = true;
-        BusyMessage = "Criptografando arquivos...";
+        BusyMessage = "Executando ofuscação criptográfica AES-GCM...";
 
         try
         {

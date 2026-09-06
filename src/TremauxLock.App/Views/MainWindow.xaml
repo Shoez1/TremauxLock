@@ -6,7 +6,7 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:conv="clr-namespace:TremauxLock.App.Converters"
         mc:Ignorable="d"
-        Title="TremauxLock"
+        Title="TremauxLock // Ofuscador Criptográfico"
         MinWidth="460" MinHeight="620"
         Width="460" Height="630"
         ResizeMode="CanMinimize"
@@ -26,12 +26,12 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />  <!-- Modern Header -->
-            <RowDefinition Height="*" />     <!-- Content -->
-            <RowDefinition Height="Auto" />  <!-- Subtle Footer -->
+            <RowDefinition Height="Auto" />  <!-- Header Estilo Hacking Suave -->
+            <RowDefinition Height="*" />     <!-- Conteudo -->
+            <RowDefinition Height="Auto" />  <!-- Footer Terminal Info -->
         </Grid.RowDefinitions>
 
-        <!-- ══ HEADER MODERNO E SUAVE ═══════════════════════════════════════ -->
+        <!-- ══ HEADER CIBERNÉTICO SUAVE ═════════════════════════════════════ -->
         <Border Grid.Row="0"
                 Padding="22,16,22,14"
                 Background="{DynamicResource MaterialDesign.Brush.Surface}"
@@ -43,26 +43,39 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <!-- App brand com badge circular suave -->
+                <!-- Brand com badge circular e visual hacking -->
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Width="38" Height="38"
-                            CornerRadius="19"
-                            Background="{DynamicResource AccentIndigoSoftBrush}"
+                    <Border Width="40" Height="40"
+                            CornerRadius="20"
+                            Background="{DynamicResource CyberCyanSoftBrush}"
                             VerticalAlignment="Center"
                             Margin="0,0,12,0">
-                        <materialDesign:PackIcon Kind="ShieldLockOutline"
+                        <materialDesign:PackIcon Kind="ShieldBugOutline"
                                                  Width="22" Height="22"
-                                                 Foreground="{DynamicResource AccentIndigoBrush}"
+                                                 Foreground="{DynamicResource CyberCyanBrush}"
                                                  HorizontalAlignment="Center"
                                                  VerticalAlignment="Center" />
                     </Border>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="TremauxLock"
-                                   FontWeight="Bold"
-                                   FontSize="17" />
-                        <TextBlock Text="Cofre de Arquivos Local"
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="TremauxLock"
+                                       FontWeight="Bold"
+                                       FontSize="17" />
+                            <Border Margin="8,0,0,0"
+                                    Background="{DynamicResource CyberCyanSoftBrush}"
+                                    CornerRadius="8"
+                                    Padding="6,2"
+                                    VerticalAlignment="Center">
+                                <TextBlock Text="v3.1 // CORE"
+                                           FontSize="10"
+                                           FontFamily="Consolas, Courier New"
+                                           FontWeight="Bold"
+                                           Foreground="{DynamicResource CyberCyanBrush}" />
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="Ofuscador Criptográfico de Arquivos"
                                    Style="{StaticResource InfoLabel}"
-                                   Margin="0" />
+                                   Margin="0,2,0,0" />
                     </StackPanel>
                 </StackPanel>
 
@@ -72,7 +85,7 @@
                             VerticalAlignment="Center">
                     <Button Command="{Binding RefreshCommand}"
                             Style="{StaticResource MaterialDesignIconForegroundButton}"
-                            ToolTip="Atualizar status do cofre"
+                            ToolTip="Verificar integridade do payload"
                             Width="36" Height="36"
                             materialDesign:ButtonAssist.CornerRadius="18">
                         <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20" />
@@ -104,7 +117,7 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <!-- Badge Pill do Status -->
+                            <!-- Badge Pill do Status com tipografia técnica -->
                             <Border x:Name="StatusPillBorder"
                                     Style="{StaticResource StatusPill}"
                                     Background="{DynamicResource UnlockedSoftBrush}">
@@ -115,20 +128,21 @@
                                     <TextBlock x:Name="StatusTextBlock"
                                                Text="{Binding StatusText}"
                                                FontWeight="Bold"
-                                               FontSize="12.5" />
+                                               FontSize="12"
+                                               FontFamily="Consolas, Courier New" />
                                 </StackPanel>
                             </Border>
 
                             <!-- Ícone ilustrativo suave no canto direito -->
                             <materialDesign:PackIcon Grid.Column="1"
                                                      x:Name="HeroStatusIcon"
-                                                     Kind="LockOpenOutline"
-                                                     Width="32" Height="32"
-                                                     Opacity="0.45"
+                                                     Kind="CodeJson"
+                                                     Width="30" Height="30"
+                                                     Opacity="0.4"
                                                      VerticalAlignment="Center" />
                         </Grid>
 
-                        <!-- Descrição de estado -->
+                        <!-- Descrição técnica de estado -->
                         <TextBlock Grid.Row="2"
                                    Text="{Binding StatusSubtext}"
                                    Style="{StaticResource SubtitleText}"
@@ -137,7 +151,7 @@
                     </Grid>
                 </materialDesign:Card>
 
-                <!-- ── MÉTRICAS (quando não está vazio) ─────────────────────── -->
+                <!-- ── MÉTRICAS DO PAYLOAD (quando há arquivos) ─────────────── -->
                 <Grid Visibility="{Binding HasFiles, Converter={StaticResource BoolToVis}}"
                       Margin="0,0,0,20">
                     <Grid.ColumnDefinitions>
@@ -146,18 +160,20 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <!-- Card Arquivos -->
+                    <!-- Card Arquivos / Itens -->
                     <materialDesign:Card Grid.Column="0"
                                          Style="{StaticResource MetricCard}">
                         <StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                <materialDesign:PackIcon Kind="FolderMultipleOutline"
+                                <materialDesign:PackIcon Kind="FileCodeOutline"
                                                          Width="16" Height="16"
-                                                         Opacity="0.55"
+                                                         Opacity="0.6"
                                                          VerticalAlignment="Center"
                                                          Margin="0,0,6,0" />
-                                <TextBlock Text="Arquivos"
-                                           Style="{StaticResource InfoLabel}" />
+                                <TextBlock Text="ITENS CARREGADOS"
+                                           Style="{StaticResource InfoLabel}"
+                                           FontFamily="Consolas, Courier New"
+                                           FontSize="10.5" />
                             </StackPanel>
                             <TextBlock Text="{Binding FileCount, StringFormat='{}{0} arquivo(s)'}"
                                        Style="{StaticResource InfoValue}"
@@ -170,13 +186,15 @@
                                          Style="{StaticResource MetricCard}">
                         <StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                <materialDesign:PackIcon Kind="DatabaseOutline"
+                                <materialDesign:PackIcon Kind="Memory"
                                                          Width="16" Height="16"
-                                                         Opacity="0.55"
+                                                         Opacity="0.6"
                                                          VerticalAlignment="Center"
                                                          Margin="0,0,6,0" />
-                                <TextBlock Text="Tamanho"
-                                           Style="{StaticResource InfoLabel}" />
+                                <TextBlock Text="VOLUME TOTAL"
+                                           Style="{StaticResource InfoLabel}"
+                                           FontFamily="Consolas, Courier New"
+                                           FontSize="10.5" />
                             </StackPanel>
                             <TextBlock Text="{Binding TotalSize}"
                                        Style="{StaticResource InfoValue}"
@@ -185,7 +203,7 @@
                     </materialDesign:Card>
                 </Grid>
 
-                <!-- Card de Data do Bloqueio (visível quando bloqueado) -->
+                <!-- Card de Data da Ofuscação (visível quando ativo) -->
                 <materialDesign:Card Margin="0,0,0,20"
                                      Style="{StaticResource MetricCard}"
                                      Visibility="{Binding IsLocked, Converter={StaticResource BoolToVis}}">
@@ -195,20 +213,22 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Text="Criptografado em"
-                                       Style="{StaticResource InfoLabel}" />
+                            <TextBlock Text="OFUSCADO EM"
+                                       Style="{StaticResource InfoLabel}"
+                                       FontFamily="Consolas, Courier New"
+                                       FontSize="10.5" />
                             <TextBlock Text="{Binding LockedAt}"
                                        Style="{StaticResource InfoValue}" />
                         </StackPanel>
                         <materialDesign:PackIcon Grid.Column="1"
-                                                 Kind="ClockTimeFourOutline"
+                                                 Kind="ClockTimeEightOutline"
                                                  Width="22" Height="22"
                                                  Opacity="0.4"
                                                  VerticalAlignment="Center" />
                     </Grid>
                 </materialDesign:Card>
 
-                <!-- ── ESTADO VAZIO: CONVITE AMIGÁVEL ───────────────────────── -->
+                <!-- ── ESTADO STANDBY // VAZIO ─────────────────────────────── -->
                 <Border Padding="24,20"
                         Margin="0,0,0,20"
                         Background="{DynamicResource EmptySoftBrush}"
@@ -228,11 +248,11 @@
                                                      HorizontalAlignment="Center"
                                                      VerticalAlignment="Center" />
                         </Border>
-                        <TextBlock Text="A pasta private está pronta"
+                        <TextBlock Text="Diretório private pronto para ingestão"
                                    FontWeight="SemiBold"
                                    FontSize="15"
                                    HorizontalAlignment="Center" />
-                        <TextBlock Text="Coloque os arquivos que deseja proteger dentro da pasta e clique em Bloquear Cofre."
+                        <TextBlock Text="Deposite os arquivos que deseja ofuscar dentro da pasta e execute a ofuscação criptográfica."
                                    Style="{StaticResource SubtitleText}"
                                    TextAlignment="Center"
                                    TextWrapping="Wrap"
@@ -249,12 +269,12 @@
                         BorderThickness="1"
                         Visibility="{Binding IsInconsistent, Converter={StaticResource BoolToVis}}">
                     <StackPanel Orientation="Horizontal">
-                        <materialDesign:PackIcon Kind="AlertCircleOutline"
+                        <materialDesign:PackIcon Kind="AlertDecagramOutline"
                                                  Width="22" Height="22"
                                                  Foreground="{StaticResource InconsistentBrush}"
                                                  VerticalAlignment="Center"
                                                  Margin="0,0,12,0" />
-                        <TextBlock Text="O cofre está em estado inconsistente. Verifique a existência de backups ou pastas pendentes."
+                        <TextBlock Text="Anomalia detectada: discrepância entre arquivos criptografados e metadados. Verifique a integridade do diretório."
                                    Foreground="{StaticResource InconsistentBrush}"
                                    FontWeight="Medium"
                                    TextWrapping="Wrap"
@@ -262,9 +282,9 @@
                     </StackPanel>
                 </Border>
 
-                <!-- ── BOTÕES DE AÇÃO CONTEXTUAIS ──────────────────────────── -->
+                <!-- ── AÇÕES CONTEXTUAIS ───────────────────────────────────── -->
 
-                <!-- Ações para COFRE ABERTO / COM ARQUIVOS -->
+                <!-- Ações para PAYLOAD DESOFUSCADO (com arquivos) -->
                 <StackPanel Visibility="{Binding IsUnlocked, Converter={StaticResource BoolToVis}}">
                     <Button Style="{StaticResource PrimaryActionButton}"
                             x:Name="LockButton"
@@ -272,11 +292,11 @@
                             HorizontalAlignment="Stretch"
                             Margin="0,0,0,12">
                         <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="ShieldLockOutline"
+                            <materialDesign:PackIcon Kind="LockPattern"
                                                      Width="19" Height="19"
                                                      VerticalAlignment="Center"
                                                      Margin="0,0,8,0" />
-                            <TextBlock Text="Bloquear Cofre Agora" VerticalAlignment="Center" />
+                            <TextBlock Text="Ofuscar e Criptografar Arquivos" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
 
@@ -288,12 +308,12 @@
                                                      Width="18" Height="18"
                                                      VerticalAlignment="Center"
                                                      Margin="0,0,8,0" />
-                            <TextBlock Text="Abrir Pasta Private" VerticalAlignment="Center" />
+                            <TextBlock Text="Explorar Pasta de Trabalho (private)" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
                 </StackPanel>
 
-                <!-- Ações para COFRE VAZIO -->
+                <!-- Ações para STANDBY (vazio) -->
                 <StackPanel Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}">
                     <Button Style="{StaticResource PrimaryActionButton}"
                             x:Name="OpenFolderEmptyButton"
@@ -305,7 +325,7 @@
                                                      Width="19" Height="19"
                                                      VerticalAlignment="Center"
                                                      Margin="0,0,8,0" />
-                            <TextBlock Text="Abrir Pasta Private para Adicionar Arquivos" VerticalAlignment="Center" />
+                            <TextBlock Text="Abrir Pasta de Trabalho (private)" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
 
@@ -314,16 +334,16 @@
                             Click="LockButton_Click"
                             HorizontalAlignment="Stretch">
                         <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="ShieldLockOutline"
+                            <materialDesign:PackIcon Kind="LockPattern"
                                                      Width="18" Height="18"
                                                      VerticalAlignment="Center"
                                                      Margin="0,0,8,0" />
-                            <TextBlock Text="Bloquear Cofre Vazio" VerticalAlignment="Center" />
+                            <TextBlock Text="Ofuscar Diretório Vazio" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
                 </StackPanel>
 
-                <!-- Ações para COFRE BLOQUEADO -->
+                <!-- Ações para OFUSCAÇÃO ATIVA (bloqueado) -->
                 <StackPanel Visibility="{Binding IsLocked, Converter={StaticResource BoolToVis}}">
                     <Button Style="{StaticResource PrimaryActionButton}"
                             x:Name="UnlockButton"
@@ -331,11 +351,11 @@
                             HorizontalAlignment="Stretch"
                             Margin="0,0,0,12">
                         <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="LockOpenVariantOutline"
+                            <materialDesign:PackIcon Kind="KeyVariant"
                                                      Width="19" Height="19"
                                                      VerticalAlignment="Center"
                                                      Margin="0,0,8,0" />
-                            <TextBlock Text="Desbloquear com Senha" VerticalAlignment="Center" />
+                            <TextBlock Text="Desofuscar com Senha" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
 
@@ -348,7 +368,7 @@
                                                      Width="18" Height="18"
                                                      VerticalAlignment="Center"
                                                      Margin="0,0,8,0" />
-                            <TextBlock Text="Usar Chave de Recuperação" VerticalAlignment="Center" />
+                            <TextBlock Text="Bypass com Chave Mestra" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
                 </StackPanel>
@@ -370,7 +390,7 @@
             </StackPanel>
         </ScrollViewer>
 
-        <!-- ══ FOOTER SUTIL ══════════════════════════════════════════════════ -->
+        <!-- ══ FOOTER TÉCNICO TERMINAL ═══════════════════════════════════════ -->
         <Border Grid.Row="2"
                 Padding="22,10"
                 Background="{DynamicResource MaterialDesign.Brush.Surface}"
@@ -382,31 +402,38 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="{Binding WorkingFolderPath, StringFormat='Pasta: {0}'}"
+                <TextBlock Text="{Binding WorkingFolderPath, StringFormat='TARGET: {0}'}"
                            Style="{StaticResource InfoLabel}"
+                           FontFamily="Consolas, Courier New"
+                           FontSize="11"
                            TextTrimming="CharacterEllipsis"
                            VerticalAlignment="Center" />
 
                 <TextBlock Grid.Column="1"
-                           Text="AES-256 GCM"
+                           Text="CIPHER: AES-256-GCM"
                            Style="{StaticResource InfoLabel}"
+                           FontFamily="Consolas, Courier New"
+                           FontSize="11"
                            FontWeight="Bold"
+                           Foreground="{DynamicResource CyberCyanBrush}"
                            VerticalAlignment="Center" />
             </Grid>
         </Border>
 
         <!-- ══ OVERLAY DE CARREGAMENTO ═══════════════════════════════════════ -->
         <Border Grid.RowSpan="3"
-                Background="#B3000000"
+                Background="#CC000000"
                 Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                 <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
                              IsIndeterminate="True"
                              Width="48" Height="48"
-                             Foreground="White" />
+                             Foreground="{DynamicResource CyberCyanBrush}" />
                 <TextBlock Text="{Binding BusyMessage}"
                            Foreground="White"
                            FontWeight="Medium"
+                           FontFamily="Consolas, Courier New"
+                           FontSize="13"
                            Margin="0,16,0,0"
                            HorizontalAlignment="Center" />
             </StackPanel>
