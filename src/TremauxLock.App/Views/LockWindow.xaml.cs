@@ -1,6 +1,8 @@
 using System;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
+using MaterialDesignThemes.Wpf;
 using TremauxLock.App.Services;
 using TremauxLock.App.ViewModels;
 
@@ -32,23 +34,31 @@ public partial class LockWindow : Window
     {
         _vm.Password = PasswordBox.Password;
         UpdateStrengthBars();
-        UpdateLockButton();
+        UpdateValidationUI();
     }
 
     private void ConfirmBox_PasswordChanged(object sender, RoutedEventArgs e)
     {
         _vm.PasswordConfirm = ConfirmBox.Password;
-        MismatchLabel.Visibility = _vm.PasswordsMatch || _vm.PasswordConfirm.Length == 0
-            ? Visibility.Collapsed
-            : Visibility.Visible;
-        UpdateLockButton();
+        UpdateValidationUI();
+    }
+
+    private void UpdateValidationUI()
+    {
+        bool hasConfirm = !string.IsNullOrEmpty(ConfirmBox.Password);
+        bool match = _vm.PasswordsMatch;
+
+        MismatchBorder.Visibility = (hasConfirm && !match)
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        LockConfirmButton.IsEnabled = _vm.CanLock;
     }
 
     private void UpdateStrengthBars()
     {
         double strength = _vm.PasswordStrength;
 
-        // Get colors from resources
         var weakBrush = FindResource("StrengthWeak") as Brush ?? Brushes.Red;
         var fairBrush = FindResource("StrengthFair") as Brush ?? Brushes.Orange;
         var strongBrush = FindResource("StrengthStrong") as Brush ?? Brushes.Green;
@@ -61,11 +71,16 @@ public partial class LockWindow : Window
         StrengthBar3.Fill = strength >= 0.65 ? activeBrush : emptyBrush;
 
         StrengthLabel.Text = _vm.Password.Length == 0 ? string.Empty : _vm.PasswordStrengthText;
+        StrengthLabel.Foreground = activeBrush;
     }
 
-    private void UpdateLockButton()
+    private void GeneratePassword_Click(object sender, RoutedEventArgs e)
     {
-        LockConfirmButton.IsEnabled = _vm.CanLock;
+        _vm.GenerateSecurePassword();
+        PasswordBox.Password = _vm.Password;
+        ConfirmBox.Password = _vm.Password;
+        UpdateStrengthBars();
+        UpdateValidationUI();
     }
 
     // ── Actions ────────────────────────────────────────────────────────────
@@ -89,16 +104,22 @@ public partial class LockWindow : Window
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e) => Close();
+    
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
 
     private void CopyKey_Click(object sender, RoutedEventArgs e)
     {
         _vm.CopyRecoveryKeyCommand.Execute(null);
-        CopyKeyLabel.Text = "Copiado!";
-        // Reset label after 3s
-        _ = System.Threading.Tasks.Task.Delay(3000).ContinueWith(_ =>
+        CopyKeyLabel.Text = "Chave copiada!";
+        CopyKeyIcon.Kind = PackIconKind.Check;
+
+        _ = Task.Delay(3000).ContinueWith(_ =>
         {
-            Dispatcher.Invoke(() => CopyKeyLabel.Text = "Copiar Chave");
+            Dispatcher.Invoke(() =>
+            {
+                CopyKeyLabel.Text = "Copiar Chave para Área de Transferência";
+                CopyKeyIcon.Kind = PackIconKind.ContentCopy;
+            });
         });
     }
 }

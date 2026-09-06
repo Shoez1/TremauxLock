@@ -2,50 +2,90 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
 
-    <!-- Primary action button: large, rounded, with icon -->
+    <!-- Primary action button: moderno, suave, bem arredondado -->
     <Style x:Key="PrimaryActionButton" TargetType="Button"
            BasedOn="{StaticResource MaterialDesignRaisedButton}">
-        <Setter Property="Height" Value="48" />
+        <Setter Property="Height" Value="50" />
         <Setter Property="FontSize" Value="14" />
-        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Padding" Value="24,0" />
-        <Setter Property="materialDesign:ButtonAssist.CornerRadius" Value="24" />
-        <Setter Property="materialDesign:ElevationAssist.Elevation" Value="Dp2" />
+        <Setter Property="materialDesign:ButtonAssist.CornerRadius" Value="25" />
+        <Setter Property="materialDesign:ElevationAssist.Elevation" Value="Dp1" />
+        <Setter Property="Cursor" Value="Hand" />
     </Style>
 
-    <!-- Secondary action button: outlined, rounded -->
+    <!-- Secondary action button: contorno suave, bem arredondado -->
     <Style x:Key="SecondaryActionButton" TargetType="Button"
            BasedOn="{StaticResource MaterialDesignOutlinedButton}">
-        <Setter Property="Height" Value="44" />
+        <Setter Property="Height" Value="46" />
         <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="Padding" Value="20,0" />
-        <Setter Property="materialDesign:ButtonAssist.CornerRadius" Value="22" />
+        <Setter Property="materialDesign:ButtonAssist.CornerRadius" Value="23" />
+        <Setter Property="Cursor" Value="Hand" />
     </Style>
 
-    <!-- Recovery/Link button: text-only -->
+    <!-- Soft Action Button: fundo translúcido sutil e cantos redondos -->
+    <Style x:Key="SoftActionButton" TargetType="Button"
+           BasedOn="{StaticResource MaterialDesignFlatButton}">
+        <Setter Property="Height" Value="44" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Padding" Value="16,0" />
+        <Setter Property="materialDesign:ButtonAssist.CornerRadius" Value="22" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
+    <!-- Rounded Input Field Container -->
+    <Style x:Key="RoundedInputBox" TargetType="Border">
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.Surface.Variant}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesign.Brush.Outline}" />
+        <Setter Property="Padding" Value="14,8" />
+    </Style>
+
+    <!-- Recovery/Link button: text-only com cantos suaves -->
     <Style x:Key="TextLinkButton" TargetType="Button"
            BasedOn="{StaticResource MaterialDesignFlatButton}">
         <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Primary}" />
+        <Setter Property="materialDesign:ButtonAssist.CornerRadius" Value="16" />
+        <Setter Property="Cursor" Value="Hand" />
     </Style>
 
-    <!-- Vault status card -->
+    <!-- Vault hero status card: cantos suaves bem arredondados -->
     <Style x:Key="VaultStatusCard" TargetType="materialDesign:Card">
         <Setter Property="Padding" Value="24" />
-        <Setter Property="materialDesign:ElevationAssist.Elevation" Value="Dp3" />
+        <Setter Property="materialDesign:ElevationAssist.Elevation" Value="Dp2" />
+        <Setter Property="UniformCornerRadius" Value="20" />
+        <Setter Property="Margin" Value="0,0,0,20" />
+    </Style>
+
+    <!-- Mini Metric Card -->
+    <Style x:Key="MetricCard" TargetType="materialDesign:Card">
+        <Setter Property="Padding" Value="16,14" />
+        <Setter Property="materialDesign:ElevationAssist.Elevation" Value="Dp1" />
         <Setter Property="UniformCornerRadius" Value="16" />
-        <Setter Property="Margin" Value="0,0,0,24" />
+    </Style>
+
+    <!-- Status pill badge -->
+    <Style x:Key="StatusPill" TargetType="Border">
+        <Setter Property="CornerRadius" Value="14" />
+        <Setter Property="Padding" Value="12,5" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
     </Style>
 
     <!-- Status indicator dot -->
     <Style x:Key="StatusDot" TargetType="Ellipse">
-        <Setter Property="Width" Value="12" />
-        <Setter Property="Height" Value="12" />
+        <Setter Property="Width" Value="10" />
+        <Setter Property="Height" Value="10" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="Margin" Value="0,0,8,0" />
     </Style>
 
-    <!-- Page title -->
+    <!-- Page title suave -->
     <Style x:Key="PageTitle" TargetType="TextBlock"
            BasedOn="{StaticResource MaterialDesignHeadline5TextBlock}">
         <Setter Property="FontWeight" Value="SemiBold" />
@@ -55,45 +95,36 @@
     <!-- Subtitle / secondary text -->
     <Style x:Key="SubtitleText" TargetType="TextBlock"
            BasedOn="{StaticResource MaterialDesignBody2TextBlock}">
-        <Setter Property="Opacity" Value="0.7" />
+        <Setter Property="Opacity" Value="0.75" />
     </Style>
 
     <!-- Info label -->
     <Style x:Key="InfoLabel" TargetType="TextBlock"
            BasedOn="{StaticResource MaterialDesignCaptionTextBlock}">
-        <Setter Property="Opacity" Value="0.55" />
+        <Setter Property="Opacity" Value="0.6" />
         <Setter Property="Margin" Value="0,0,0,2" />
     </Style>
 
     <!-- Info value -->
     <Style x:Key="InfoValue" TargetType="TextBlock"
            BasedOn="{StaticResource MaterialDesignBody1TextBlock}">
-        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
 
-    <!-- Recovery key display box -->
+    <!-- Recovery key display box com cantos bem arredondados -->
     <Style x:Key="RecoveryKeyBox" TargetType="Border">
-        <Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.Background}" />
+        <Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.Surface.Variant}" />
         <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesign.Brush.Primary}" />
         <Setter Property="BorderThickness" Value="1.5" />
-        <Setter Property="CornerRadius" Value="8" />
-        <Setter Property="Padding" Value="16,12" />
+        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="Padding" Value="18,14" />
     </Style>
 
-    <!-- Warning card -->
-    <Style x:Key="WarningCard" TargetType="materialDesign:Card">
-        <Setter Property="Background" Value="#FFF3E0" />
-        <Setter Property="Padding" Value="16" />
-        <Setter Property="UniformCornerRadius" Value="12" />
-        <Setter Property="materialDesign:ElevationAssist.Elevation" Value="Dp0" />
-        <Setter Property="Margin" Value="0,16,0,0" />
-    </Style>
-
-    <!-- Password strength bar -->
+    <!-- Password strength bar suave e arredondada -->
     <Style x:Key="StrengthBar" TargetType="Rectangle">
-        <Setter Property="Height" Value="4" />
-        <Setter Property="RadiusX" Value="2" />
-        <Setter Property="RadiusY" Value="2" />
+        <Setter Property="Height" Value="6" />
+        <Setter Property="RadiusX" Value="3" />
+        <Setter Property="RadiusY" Value="3" />
     </Style>
 
 </ResourceDictionary>

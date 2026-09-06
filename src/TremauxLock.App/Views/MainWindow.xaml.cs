@@ -1,6 +1,7 @@
 using System;
 using System.Windows;
 using System.Windows.Media;
+using MaterialDesignThemes.Wpf;
 using TremauxLock.App.Services;
 using TremauxLock.App.ViewModels;
 
@@ -23,25 +24,49 @@ public partial class MainWindow : Window
             if (e.PropertyName is nameof(MainViewModel.State)
                                 or nameof(MainViewModel.StatusKind))
             {
-                UpdateStatusDot();
+                UpdateStatusAppearance();
             }
         };
 
-        UpdateStatusDot();
+        UpdateStatusAppearance();
     }
 
-    private void UpdateStatusDot()
+    private void UpdateStatusAppearance()
     {
-        var (brush, icon) = _vm.State switch
+        var (dotBrush, pillBgBrush, icon, heroPackIcon) = _vm.State switch
         {
-            VaultStateKind.Unlocked => (FindResource("UnlockedBrush") as Brush, "🔓"),
-            VaultStateKind.Locked => (FindResource("LockedBrush") as Brush, "🔒"),
-            VaultStateKind.Inconsistent => (FindResource("InconsistentBrush") as Brush, "⚠️"),
-            _ => (FindResource("EmptyBrush") as Brush, "📂")
+            VaultStateKind.Unlocked => (
+                FindResource("UnlockedBrush") as Brush ?? Brushes.Green,
+                FindResource("UnlockedSoftBrush") as Brush ?? Brushes.LightGreen,
+                "🔓",
+                PackIconKind.LockOpenVariantOutline
+            ),
+            VaultStateKind.Locked => (
+                FindResource("LockedBrush") as Brush ?? Brushes.Red,
+                FindResource("LockedSoftBrush") as Brush ?? Brushes.MistyRose,
+                "🔒",
+                PackIconKind.ShieldLockOutline
+            ),
+            VaultStateKind.Inconsistent => (
+                FindResource("InconsistentBrush") as Brush ?? Brushes.Orange,
+                FindResource("InconsistentSoftBrush") as Brush ?? Brushes.Wheat,
+                "⚠️",
+                PackIconKind.AlertCircleOutline
+            ),
+            _ => (
+                FindResource("EmptyBrush") as Brush ?? Brushes.Gray,
+                FindResource("EmptySoftBrush") as Brush ?? Brushes.LightGray,
+                "📂",
+                PackIconKind.FolderOpenOutline
+            )
         };
 
-        StatusDotEllipse.Fill = brush;
-        Title = $"{icon} TremauxLock";
+        StatusDotEllipse.Fill = dotBrush;
+        StatusTextBlock.Foreground = dotBrush;
+        StatusPillBorder.Background = pillBgBrush;
+        HeroStatusIcon.Kind = heroPackIcon;
+        HeroStatusIcon.Foreground = dotBrush;
+        Title = $"{icon} TremauxLock — Cofre Local";
     }
 
     // ── Button event handlers ──────────────────────────────────────────────
@@ -80,11 +105,15 @@ public partial class MainWindow : Window
     {
         try
         {
-            System.Diagnostics.Process.Start("explorer.exe", _vm.WorkingFolderPath);
+            if (!string.IsNullOrEmpty(_vm.WorkingFolderPath))
+            {
+                System.IO.Directory.CreateDirectory(_vm.WorkingFolderPath);
+                System.Diagnostics.Process.Start("explorer.exe", _vm.WorkingFolderPath);
+            }
         }
         catch (Exception ex)
         {
-            MessageBox.Show(ex.Message, "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(ex.Message, "Erro ao abrir pasta", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 }

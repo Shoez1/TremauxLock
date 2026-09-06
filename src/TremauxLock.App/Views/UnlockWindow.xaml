@@ -2,9 +2,10 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:conv="clr-namespace:TremauxLock.App.Converters"
         Title="Desbloquear Cofre"
-        Width="440" SizeToContent="Height"
-        MinHeight="280"
+        Width="460" SizeToContent="Height"
+        MinHeight="320"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
         TextElement.Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
@@ -12,135 +13,230 @@
         FontFamily="{materialDesign:MaterialDesignFont}">
 
     <Window.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
+        <conv:NullOrEmptyToVisibilityConverter x:Key="NullOrEmptyToVis" />
     </Window.Resources>
 
-    <StackPanel Margin="28,24">
+    <Grid Margin="24,20,24,24">
 
-        <!-- Header -->
-        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-            <materialDesign:PackIcon Kind="LockOpenOutline"
-                                     Width="28" Height="28"
-                                     VerticalAlignment="Center"
-                                     Foreground="{DynamicResource MaterialDesign.Brush.Primary}"
-                                     Margin="0,0,10,0" />
-            <TextBlock x:Name="TitleBlock"
-                       Text="Desbloquear Cofre"
-                       Style="{StaticResource PageTitle}" />
-        </StackPanel>
-        <TextBlock x:Name="SubtitleBlock"
-                   Text="Digite sua senha para acessar os arquivos."
-                   Style="{StaticResource SubtitleText}"
-                   Margin="0,0,0,24" />
+        <StackPanel>
 
-        <!-- Password entry (shown when not using recovery key) -->
-        <PasswordBox x:Name="PasswordBox"
-                     materialDesign:HintAssist.Hint="Senha do cofre"
-                     materialDesign:HintAssist.IsFloating="True"
-                     Style="{StaticResource MaterialDesignPasswordBox}"
-                     Margin="0,0,0,16"
-                     PasswordChanged="PasswordBox_PasswordChanged"
-                     KeyDown="PasswordBox_KeyDown" />
+            <!-- Header com badge circular e título -->
+            <Grid Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-        <!-- Recovery key entry (shown when using recovery key) -->
-        <TextBox x:Name="RecoveryBox"
-                 materialDesign:HintAssist.Hint="Chave de recuperação (XXXX-XXXX-...)"
-                 materialDesign:HintAssist.IsFloating="True"
-                 Style="{StaticResource MaterialDesignTextBox}"
-                 FontFamily="Consolas, Courier New"
-                 Visibility="Collapsed"
-                 Margin="0,0,0,16"
-                 TextChanged="RecoveryBox_TextChanged"
-                 KeyDown="RecoveryBox_KeyDown" />
+                <Border Width="48" Height="48"
+                        CornerRadius="24"
+                        Background="{DynamicResource UnlockedSoftBrush}"
+                        VerticalAlignment="Center"
+                        Margin="0,0,16,0">
+                    <materialDesign:PackIcon Kind="LockOpenVariantOutline"
+                                             Width="24" Height="24"
+                                             Foreground="{StaticResource UnlockedBrush}"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center" />
+                </Border>
 
-        <!-- Toggle mode link -->
-        <Button x:Name="ToggleModeButton"
-                Style="{StaticResource TextLinkButton}"
-                HorizontalAlignment="Left"
-                Margin="0,0,0,16"
-                Click="ToggleMode_Click"
-                Content="Usar chave de recuperação" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock x:Name="TitleBlock"
+                               Text="Desbloquear Cofre"
+                               Style="{StaticResource PageTitle}" />
+                    <TextBlock x:Name="SubtitleBlock"
+                               Text="Informe sua credencial para descriptografar os arquivos"
+                               Style="{StaticResource SubtitleText}"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+            </Grid>
 
-        <!-- Error message -->
-        <Border x:Name="ErrorBorder"
-                Padding="12,8"
-                Background="#B71C1C"
-                CornerRadius="6"
-                Margin="0,0,0,16"
-                Visibility="Collapsed">
-            <StackPanel Orientation="Horizontal">
-                <materialDesign:PackIcon Kind="AlertCircleOutline"
-                                         VerticalAlignment="Center"
-                                         Foreground="White"
-                                         Margin="0,0,8,0" />
-                <TextBlock x:Name="ErrorText"
-                           Foreground="White"
-                           TextWrapping="Wrap"
-                           VerticalAlignment="Center" />
-            </StackPanel>
-        </Border>
+            <!-- Alternador estilo Pill Tab (Senha vs Chave) -->
+            <Border Background="{DynamicResource MaterialDesign.Brush.Surface.Variant}"
+                    CornerRadius="16"
+                    Padding="4"
+                    Margin="0,0,0,18"
+                    HorizontalAlignment="Stretch">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
 
-        <!-- Success message -->
-        <Border x:Name="SuccessBorder"
-                Padding="12,8"
-                Background="#1B5E20"
-                CornerRadius="6"
-                Margin="0,0,0,16"
-                Visibility="Collapsed">
-            <StackPanel Orientation="Horizontal">
-                <materialDesign:PackIcon Kind="CheckCircle"
-                                         VerticalAlignment="Center"
-                                         Foreground="#A5D6A7"
-                                         Margin="0,0,8,0" />
-                <TextBlock Text="Cofre desbloqueado com sucesso!"
-                           Foreground="#A5D6A7"
-                           FontWeight="SemiBold"
-                           VerticalAlignment="Center" />
-            </StackPanel>
-        </Border>
+                    <!-- Botão Tab Senha -->
+                    <Button x:Name="TabPasswordButton"
+                            Grid.Column="0"
+                            Style="{StaticResource MaterialDesignFlatButton}"
+                            Height="38"
+                            materialDesign:ButtonAssist.CornerRadius="14"
+                            Click="TabPassword_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="KeyVariant"
+                                                     Width="16" Height="16"
+                                                     VerticalAlignment="Center"
+                                                     Margin="0,0,6,0" />
+                            <TextBlock Text="Senha"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
 
-        <!-- Busy indicator -->
-        <StackPanel x:Name="BusyPanel"
-                    Orientation="Horizontal"
-                    HorizontalAlignment="Center"
+                    <!-- Botão Tab Chave de Recuperação -->
+                    <Button x:Name="TabRecoveryButton"
+                            Grid.Column="1"
+                            Style="{StaticResource MaterialDesignFlatButton}"
+                            Height="38"
+                            materialDesign:ButtonAssist.CornerRadius="14"
+                            Click="TabRecovery_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ShieldKeyOutline"
+                                                     Width="16" Height="16"
+                                                     VerticalAlignment="Center"
+                                                     Margin="0,0,6,0" />
+                            <TextBlock Text="Chave de Recuperação"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Card dos campos de entrada -->
+            <materialDesign:Card UniformCornerRadius="18"
+                                 Padding="20"
+                                 Margin="0,0,0,16"
+                                 materialDesign:ElevationAssist.Elevation="Dp1">
+                <StackPanel>
+
+                    <!-- Entrada de Senha -->
+                    <StackPanel x:Name="PasswordPanel">
+                        <PasswordBox x:Name="PasswordBox"
+                                     materialDesign:HintAssist.Hint="Digite a senha do cofre"
+                                     materialDesign:HintAssist.IsFloating="True"
+                                     Style="{StaticResource MaterialDesignPasswordBox}"
+                                     FontSize="14"
+                                     Margin="0,0,0,4"
+                                     PasswordChanged="PasswordBox_PasswordChanged"
+                                     KeyDown="PasswordBox_KeyDown" />
+                    </StackPanel>
+
+                    <!-- Entrada de Chave de Recuperação -->
+                    <StackPanel x:Name="RecoveryPanel" Visibility="Collapsed">
+                        <TextBox x:Name="RecoveryBox"
+                                 materialDesign:HintAssist.Hint="Chave (Ex: XXXX-XXXX-XXXX-...)"
+                                 materialDesign:HintAssist.IsFloating="True"
+                                 Style="{StaticResource MaterialDesignTextBox}"
+                                 FontFamily="Consolas, Courier New"
+                                 FontSize="13.5"
+                                 Margin="0,0,0,4"
+                                 TextChanged="RecoveryBox_TextChanged"
+                                 KeyDown="RecoveryBox_KeyDown" />
+                        <TextBlock Text="Cole a chave completa de 32 dígitos gerada no bloqueio"
+                                   Style="{StaticResource InfoLabel}"
+                                   Margin="0,4,0,0" />
+                    </StackPanel>
+
+                </StackPanel>
+            </materialDesign:Card>
+
+            <!-- Mensagem de Erro com cantos suaves -->
+            <Border x:Name="ErrorBorder"
+                    Padding="14,10"
+                    Background="{DynamicResource LockedSoftBrush}"
+                    BorderBrush="{StaticResource LockedBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
                     Margin="0,0,0,16"
                     Visibility="Collapsed">
-            <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
-                         IsIndeterminate="True"
-                         Width="28" Height="28"
-                         Margin="0,0,12,0" />
-            <TextBlock Text="Descriptografando..."
-                       VerticalAlignment="Center"
-                       Opacity="0.7" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <materialDesign:PackIcon Kind="AlertCircleOutline"
+                                             Width="20" Height="20"
+                                             Foreground="{StaticResource LockedBrush}"
+                                             VerticalAlignment="Center"
+                                             Margin="0,0,10,0" />
+
+                    <TextBlock Grid.Column="1"
+                               x:Name="ErrorText"
+                               Foreground="{StaticResource LockedBrush}"
+                               TextWrapping="Wrap"
+                               FontWeight="Medium"
+                               VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
+            <!-- Banner de Sucesso com cantos suaves -->
+            <Border x:Name="SuccessBorder"
+                    Padding="14,10"
+                    Background="{DynamicResource UnlockedSoftBrush}"
+                    BorderBrush="{StaticResource UnlockedBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Margin="0,0,0,16"
+                    Visibility="Collapsed">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="CheckCircle"
+                                             Foreground="{StaticResource UnlockedBrush}"
+                                             Width="20" Height="20"
+                                             VerticalAlignment="Center"
+                                             Margin="0,0,10,0" />
+                    <TextBlock Text="Cofre restaurado e desbloqueado com sucesso!"
+                               Foreground="{StaticResource UnlockedBrush}"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+            </Border>
+
+            <!-- Indicador de progresso ocupado -->
+            <StackPanel x:Name="BusyPanel"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        Margin="0,0,0,16"
+                        Visibility="Collapsed">
+                <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
+                             IsIndeterminate="True"
+                             Width="24" Height="24"
+                             Margin="0,0,12,0" />
+                <TextBlock Text="Validando e descriptografando arquivos..."
+                           VerticalAlignment="Center"
+                           FontWeight="Medium"
+                           Opacity="0.8" />
+            </StackPanel>
+
+            <!-- Ações -->
+            <Grid Margin="0,4,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="14" />
+                    <ColumnDefinition Width="1.4*" />
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0"
+                        Style="{StaticResource SecondaryActionButton}"
+                        Content="Cancelar"
+                        Click="Cancel_Click"
+                        HorizontalAlignment="Stretch" />
+
+                <Button Grid.Column="2"
+                        x:Name="UnlockButton"
+                        Style="{StaticResource PrimaryActionButton}"
+                        Click="Unlock_Click"
+                        IsEnabled="False">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="LockOpenVariant"
+                                                 Width="18" Height="18"
+                                                 VerticalAlignment="Center"
+                                                 Margin="0,0,8,0" />
+                        <TextBlock Text="Desbloquear" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+
         </StackPanel>
 
-        <!-- Action buttons -->
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="12" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-
-            <Button Grid.Column="0"
-                    Style="{StaticResource SecondaryActionButton}"
-                    Content="Cancelar"
-                    Click="Cancel_Click"
-                    HorizontalAlignment="Stretch" />
-
-            <Button Grid.Column="2"
-                    x:Name="UnlockButton"
-                    Style="{StaticResource PrimaryActionButton}"
-                    Click="Unlock_Click"
-                    IsEnabled="False">
-                <StackPanel Orientation="Horizontal">
-                    <materialDesign:PackIcon Kind="LockOpenOutline"
-                                             VerticalAlignment="Center"
-                                             Margin="0,0,6,0" />
-                    <TextBlock Text="Desbloquear" VerticalAlignment="Center" />
-                </StackPanel>
-            </Button>
-        </Grid>
-
-    </StackPanel>
+    </Grid>
 </Window>

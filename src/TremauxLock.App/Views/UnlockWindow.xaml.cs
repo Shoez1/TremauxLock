@@ -1,6 +1,8 @@
 using System;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using TremauxLock.App.Services;
 using TremauxLock.App.ViewModels;
 
@@ -18,15 +20,18 @@ public partial class UnlockWindow : Window
         _vm.UseRecoveryKey = useRecoveryKey;
         DataContext = _vm;
 
-        ApplyMode();
+        ApplyModeUI();
     }
 
     // ── Input handlers ─────────────────────────────────────────────────────
 
     private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
     {
-        _vm.Secret = PasswordBox.Password;
-        UnlockButton.IsEnabled = _vm.CanUnlock;
+        if (!_vm.UseRecoveryKey)
+        {
+            _vm.Secret = PasswordBox.Password;
+            UnlockButton.IsEnabled = _vm.CanUnlock;
+        }
     }
 
     private void PasswordBox_KeyDown(object sender, KeyEventArgs e)
@@ -37,8 +42,11 @@ public partial class UnlockWindow : Window
 
     private void RecoveryBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
     {
-        _vm.Secret = RecoveryBox.Text;
-        UnlockButton.IsEnabled = _vm.CanUnlock;
+        if (_vm.UseRecoveryKey)
+        {
+            _vm.Secret = RecoveryBox.Text.Trim();
+            UnlockButton.IsEnabled = _vm.CanUnlock;
+        }
     }
 
     private void RecoveryBox_KeyDown(object sender, KeyEventArgs e)
@@ -49,42 +57,73 @@ public partial class UnlockWindow : Window
 
     // ── Mode toggle ────────────────────────────────────────────────────────
 
-    private void ToggleMode_Click(object sender, RoutedEventArgs e)
+    private void TabPassword_Click(object sender, RoutedEventArgs e)
     {
-        _vm.UseRecoveryKey = !_vm.UseRecoveryKey;
+        if (!_vm.UseRecoveryKey) return;
+        _vm.UseRecoveryKey = false;
+        SwitchMode();
+    }
+
+    private void TabRecovery_Click(object sender, RoutedEventArgs e)
+    {
+        if (_vm.UseRecoveryKey) return;
+        _vm.UseRecoveryKey = true;
+        SwitchMode();
+    }
+
+    private void SwitchMode()
+    {
         _vm.Secret = string.Empty;
         PasswordBox.Password = string.Empty;
         RecoveryBox.Text = string.Empty;
         ErrorBorder.Visibility = Visibility.Collapsed;
         UnlockButton.IsEnabled = false;
-        ApplyMode();
+        ApplyModeUI();
     }
 
-    private void ApplyMode()
+    private void ApplyModeUI()
     {
         bool isRecovery = _vm.UseRecoveryKey;
 
-        PasswordBox.Visibility = isRecovery ? Visibility.Collapsed : Visibility.Visible;
-        RecoveryBox.Visibility = isRecovery ? Visibility.Visible : Visibility.Collapsed;
-        ToggleModeButton.Content = isRecovery
-            ? "Usar senha em vez disso"
-            : "Usar chave de recuperação";
-        TitleBlock.Text = isRecovery ? "Recuperar Cofre" : "Desbloquear Cofre";
-        SubtitleBlock.Text = isRecovery
-            ? "Digite a chave de recuperação gerada no momento do bloqueio."
-            : "Digite sua senha para acessar os arquivos.";
+        // Visual dos botões de aba
+        var primaryBrush = FindResource("MaterialDesign.Brush.Primary") as Brush;
+        var onPrimaryBrush = Brushes.White;
+        var transparentBrush = Brushes.Transparent;
+        var defaultForeground = FindResource("MaterialDesign.Brush.Foreground") as Brush;
 
-        if (isRecovery)
-            RecoveryBox.Focus();
-        else
+        if (!isRecovery)
+        {
+            TabPasswordButton.Background = primaryBrush;
+            TabPasswordButton.Foreground = onPrimaryBrush;
+            TabRecoveryButton.Background = transparentBrush;
+            TabRecoveryButton.Foreground = defaultForeground;
+
+            PasswordPanel.Visibility = Visibility.Visible;
+            RecoveryPanel.Visibility = Visibility.Collapsed;
+            TitleBlock.Text = "Desbloquear com Senha";
+            SubtitleBlock.Text = "Digite a senha definida no bloqueio do cofre.";
             PasswordBox.Focus();
+        }
+        else
+        {
+            TabRecoveryButton.Background = primaryBrush;
+            TabRecoveryButton.Foreground = onPrimaryBrush;
+            TabPasswordButton.Background = transparentBrush;
+            TabPasswordButton.Foreground = defaultForeground;
+
+            PasswordPanel.Visibility = Visibility.Collapsed;
+            RecoveryPanel.Visibility = Visibility.Visible;
+            TitleBlock.Text = "Recuperar Cofre";
+            SubtitleBlock.Text = "Use a chave de 32 caracteres gerada quando o cofre foi bloqueado.";
+            RecoveryBox.Focus();
+        }
     }
 
     // ── Unlock ─────────────────────────────────────────────────────────────
 
     private async void Unlock_Click(object sender, RoutedEventArgs e) => await RunUnlockAsync();
 
-    private async System.Threading.Tasks.Task RunUnlockAsync()
+    private async Task RunUnlockAsync()
     {
         ErrorBorder.Visibility = Visibility.Collapsed;
         BusyPanel.Visibility = Visibility.Visible;
@@ -105,8 +144,7 @@ public partial class UnlockWindow : Window
             UnlockSucceeded = true;
             SuccessBorder.Visibility = Visibility.Visible;
 
-            // Auto-close after brief success display
-            await System.Threading.Tasks.Task.Delay(800);
+            await Task.Delay(900);
             Close();
         }
     }

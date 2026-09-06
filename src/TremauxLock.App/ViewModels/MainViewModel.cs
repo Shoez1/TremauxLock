@@ -39,6 +39,8 @@ public partial class MainViewModel : ObservableObject
     public bool IsLocked => State == VaultStateKind.Locked;
     public bool IsEmpty => State == VaultStateKind.Empty;
     public bool IsInconsistent => State == VaultStateKind.Inconsistent;
+    public bool HasFiles => !IsEmpty;
+    public bool CanLockState => IsUnlocked || IsEmpty;
 
     public string StatusText => State switch
     {
