@@ -13,7 +13,7 @@
                                              ColorAdjustment="{materialDesign:ColorAdjustment DesiredContrastRatio=4.5,
                                                                                                Contrast=Medium,
                                                                                                Colors=All}" />
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Defaults.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
 
                 <!-- App styles -->
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />

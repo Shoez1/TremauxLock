@@ -1,5 +1,7 @@
+using System;
+using System.IO;
 using System.Windows;
-using System.Windows.Media;
+using System.Windows.Threading;
 using MaterialDesignThemes.Wpf;
 
 namespace TremauxLock.App;
@@ -8,8 +10,43 @@ public partial class App : Application
 {
     protected override void OnStartup(StartupEventArgs e)
     {
+        // Global crash handlers — write to crash.log next to the exe
+        AppDomain.CurrentDomain.UnhandledException += (_, ex) =>
+            WriteCrashLog(ex.ExceptionObject as Exception);
+
+        DispatcherUnhandledException += (_, ex) =>
+        {
+            WriteCrashLog(ex.Exception);
+            ex.Handled = true;
+            MessageBox.Show(
+                $"Erro inesperado:\n\n{ex.Exception.Message}\n\nDetalhes em crash.log",
+                "TremauxLock — Erro",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+            Shutdown(1);
+        };
+
         base.OnStartup(e);
-        ApplySystemTheme();
+
+        try
+        {
+            ApplySystemTheme();
+        }
+        catch (Exception ex)
+        {
+            WriteCrashLog(ex);
+        }
+    }
+
+    private static void WriteCrashLog(Exception? ex)
+    {
+        try
+        {
+            string logPath = Path.Combine(AppContext.BaseDirectory, "crash.log");
+            File.AppendAllText(logPath,
+                $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}]\n{ex}\n\n");
+        }
+        catch { }
     }
 
     private static void ApplySystemTheme()
