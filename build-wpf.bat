@@ -1,23 +1,24 @@
 @echo off
 echo ============================================================
-echo  TremauxLock WPF — Release Build
+echo  TremauxLock - Release Build (Single-File Portable EXE)
 echo ============================================================
 
-dotnet publish src\TremauxLock.App\TremauxLock.App.csproj ^
-    -c Release ^
-    -r win-x64 ^
-    --self-contained true ^
-    /p:PublishSingleFile=true ^
-    /p:EnableCompressionInSingleFile=true ^
-    /p:DebugType=None ^
-    /p:DebugSymbols=false ^
-    -o dist\wpf-win-x64
+set PROJECT=src\TremauxLock.App\TremauxLock.App.csproj
+set OUTDIR=dist\wpf-win-x64
+
+dotnet publish "%PROJECT%" -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:IncludeAllContentForSelfExtract=true /p:EnableCompressionInSingleFile=true /p:GenerateRuntimeConfigurationFiles=false /p:PublishReadyToRun=false /p:DebugType=None /p:DebugSymbols=false -o "%OUTDIR%"
 
 if %ERRORLEVEL% NEQ 0 (
     echo.
-    echo [ERRO] Build falhou.
+    echo [ERRO] Build falhou com codigo %ERRORLEVEL%.
     exit /b %ERRORLEVEL%
 )
 
+if exist "%OUTDIR%\*.pdb" del /q "%OUTDIR%\*.pdb"
+if exist "%OUTDIR%\*.dll" del /q "%OUTDIR%\*.dll"
+
 echo.
-echo [OK] Build concluido: dist\wpf-win-x64\TremauxLock.exe
+echo ============================================================
+echo  [OK] Executavel portatil gerado com sucesso:
+echo       %OUTDIR%\TremauxLock.exe
+echo ============================================================

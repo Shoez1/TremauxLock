@@ -12,8 +12,16 @@
     <AssemblyTitle>TremauxLock</AssemblyTitle>
     <Product>TremauxLock</Product>
     <Copyright>TremauxLock</Copyright>
+
+    <!-- Publicação: 100% Single File Portable (zero DLLs soltas) -->
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
+    <PublishReadyToRun>false</PublishReadyToRun>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,6 +31,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TremauxLock.Core\TremauxLock.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="..\..\ladybug.ico">
+      <Link>ladybug.ico</Link>
+    </Resource>
   </ItemGroup>
 
 </Project>
