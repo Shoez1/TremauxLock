@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TremauxLock.App/TremauxLock.App.csproj" />
+    <Project Path="src/TremauxLock.Core/TremauxLock.Core.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,242 @@
+<Window x:Class="TremauxLock.App.Views.LockWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:vm="clr-namespace:TremauxLock.App.ViewModels"
+        Title="Bloquear Cofre"
+        Width="440" SizeToContent="Height"
+        MinHeight="300"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        TextElement.Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
+        Background="{DynamicResource MaterialDesign.Brush.Background}"
+        FontFamily="{materialDesign:MaterialDesignFont}">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </Window.Resources>
+
+    <StackPanel Margin="28,24">
+
+        <!-- ── Header ─────────────────────────────────────────────────────── -->
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+            <materialDesign:PackIcon Kind="LockOutline"
+                                     Width="28" Height="28"
+                                     VerticalAlignment="Center"
+                                     Foreground="{DynamicResource MaterialDesign.Brush.Primary}"
+                                     Margin="0,0,10,0" />
+            <TextBlock Text="Bloquear Cofre"
+                       Style="{StaticResource PageTitle}" />
+        </StackPanel>
+        <TextBlock Text="Defina uma senha forte para proteger seus arquivos."
+                   Style="{StaticResource SubtitleText}"
+                   Margin="0,0,0,24" />
+
+        <!-- ── Phase 1: Password entry (hidden when lock succeeded) ───────── -->
+        <StackPanel Visibility="{Binding LockSucceeded, Converter={StaticResource BoolToVis},
+                                         ConverterParameter=inverse}">
+
+            <!-- Password field -->
+            <PasswordBox x:Name="PasswordBox"
+                         materialDesign:HintAssist.Hint="Senha (mínimo 10 caracteres)"
+                         materialDesign:HintAssist.IsFloating="True"
+                         Style="{StaticResource MaterialDesignPasswordBox}"
+                         Margin="0,0,0,4"
+                         PasswordChanged="PasswordBox_PasswordChanged" />
+
+            <!-- Strength bar + label -->
+            <Grid Margin="0,6,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Grid HorizontalAlignment="Stretch">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="4" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="4" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Rectangle Grid.Column="0"
+                               Style="{StaticResource StrengthBar}"
+                               x:Name="StrengthBar1"
+                               Fill="{DynamicResource MaterialDesign.Brush.Divider}" />
+                    <Rectangle Grid.Column="2"
+                               Style="{StaticResource StrengthBar}"
+                               x:Name="StrengthBar2"
+                               Fill="{DynamicResource MaterialDesign.Brush.Divider}" />
+                    <Rectangle Grid.Column="4"
+                               Style="{StaticResource StrengthBar}"
+                               x:Name="StrengthBar3"
+                               Fill="{DynamicResource MaterialDesign.Brush.Divider}" />
+                </Grid>
+
+                <TextBlock Grid.Column="1"
+                           x:Name="StrengthLabel"
+                           Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                           Opacity="0.6"
+                           Margin="8,0,0,0"
+                           VerticalAlignment="Center" />
+            </Grid>
+
+            <!-- Confirm password field -->
+            <PasswordBox x:Name="ConfirmBox"
+                         materialDesign:HintAssist.Hint="Confirme a senha"
+                         materialDesign:HintAssist.IsFloating="True"
+                         Style="{StaticResource MaterialDesignPasswordBox}"
+                         Margin="0,0,0,4"
+                         PasswordChanged="ConfirmBox_PasswordChanged" />
+
+            <TextBlock x:Name="MismatchLabel"
+                       Text="As senhas não coincidem"
+                       Foreground="{StaticResource LockedBrush}"
+                       Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                       Margin="0,2,0,16"
+                       Visibility="Collapsed" />
+
+            <!-- Error message -->
+            <Border x:Name="ErrorBorder"
+                    Padding="12,8"
+                    Background="#B71C1C"
+                    CornerRadius="6"
+                    Margin="0,0,0,12"
+                    Visibility="Collapsed">
+                <TextBlock x:Name="ErrorText"
+                           Foreground="White"
+                           TextWrapping="Wrap" />
+            </Border>
+
+            <!-- Actions -->
+            <Grid Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0"
+                        Style="{StaticResource SecondaryActionButton}"
+                        Content="Cancelar"
+                        Click="Cancel_Click"
+                        HorizontalAlignment="Stretch" />
+
+                <Button Grid.Column="2"
+                        x:Name="LockConfirmButton"
+                        Style="{StaticResource PrimaryActionButton}"
+                        Click="LockConfirm_Click"
+                        IsEnabled="False">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="LockOutline"
+                                                 VerticalAlignment="Center"
+                                                 Margin="0,0,6,0" />
+                        <TextBlock Text="Bloquear" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+        </StackPanel>
+
+        <!-- ── Phase 2: Recovery key display (after lock succeeded) ─────── -->
+        <StackPanel Visibility="{Binding LockSucceeded, Converter={StaticResource BoolToVis}}">
+
+            <!-- Success banner -->
+            <Border Background="#1B5E20"
+                    CornerRadius="8"
+                    Padding="16,12"
+                    Margin="0,0,0,20">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="CheckCircle"
+                                             Width="22" Height="22"
+                                             Foreground="#A5D6A7"
+                                             VerticalAlignment="Center"
+                                             Margin="0,0,10,0" />
+                    <TextBlock Text="Cofre bloqueado com sucesso!"
+                               Foreground="#A5D6A7"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+            </Border>
+
+            <!-- Recovery key section -->
+            <TextBlock Text="🗝️  Chave de Recuperação"
+                       Style="{StaticResource MaterialDesignSubtitle1TextBlock}"
+                       FontWeight="SemiBold"
+                       Margin="0,0,0,6" />
+
+            <TextBlock TextWrapping="Wrap"
+                       Style="{StaticResource SubtitleText}"
+                       Margin="0,0,0,12">
+                Guarde esta chave em local seguro <Bold>fora deste computador</Bold>.
+                Ela é a única forma de recuperar seus arquivos caso esqueça a senha.
+            </TextBlock>
+
+            <!-- Key display box -->
+            <Border Style="{StaticResource RecoveryKeyBox}" Margin="0,0,0,12">
+                <TextBlock Text="{Binding RecoveryKey}"
+                           FontFamily="Consolas, Courier New"
+                           FontSize="15"
+                           FontWeight="SemiBold"
+                           TextWrapping="Wrap"
+                           TextAlignment="Center" />
+            </Border>
+
+            <!-- Copy button -->
+            <Button Style="{StaticResource SecondaryActionButton}"
+                    x:Name="CopyKeyButton"
+                    HorizontalAlignment="Stretch"
+                    Margin="0,0,0,16"
+                    Click="CopyKey_Click">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="ContentCopy"
+                                             VerticalAlignment="Center"
+                                             Margin="0,0,8,0" />
+                    <TextBlock x:Name="CopyKeyLabel"
+                               Text="Copiar Chave"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+
+            <!-- Backup warning -->
+            <Border Background="#E65100"
+                    CornerRadius="8"
+                    Padding="14,10"
+                    Margin="0,0,0,20"
+                    Visibility="{Binding BackupWarning, Converter={StaticResource BoolToVis}}">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="AlertOutline"
+                                             VerticalAlignment="Top"
+                                             Margin="0,2,8,0"
+                                             Foreground="White" />
+                    <TextBlock Text="{Binding BackupWarning}"
+                               Foreground="White"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <!-- Close -->
+            <Button Style="{StaticResource PrimaryActionButton}"
+                    Content="Fechar"
+                    Click="Close_Click"
+                    HorizontalAlignment="Stretch" />
+
+        </StackPanel>
+
+        <!-- Busy overlay -->
+        <Grid x:Name="BusyOverlay"
+              Background="#80000000"
+              Visibility="Collapsed">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
+                             IsIndeterminate="True"
+                             Width="40" Height="40" />
+                <TextBlock Text="Criptografando..."
+                           Foreground="White"
+                           Margin="0,12,0,0"
+                           HorizontalAlignment="Center" />
+            </StackPanel>
+        </Grid>
+
+    </StackPanel>
+</Window>
