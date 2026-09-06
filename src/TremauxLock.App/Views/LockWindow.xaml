@@ -111,15 +111,15 @@
                             <Rectangle Grid.Column="0"
                                        Style="{StaticResource StrengthBar}"
                                        x:Name="StrengthBar1"
-                                       Fill="{DynamicResource MaterialDesign.Brush.Divider}" />
+                                       Fill="{DynamicResource StrengthEmptyBrush}" />
                             <Rectangle Grid.Column="2"
                                        Style="{StaticResource StrengthBar}"
                                        x:Name="StrengthBar2"
-                                       Fill="{DynamicResource MaterialDesign.Brush.Divider}" />
+                                       Fill="{DynamicResource StrengthEmptyBrush}" />
                             <Rectangle Grid.Column="4"
                                        Style="{StaticResource StrengthBar}"
                                        x:Name="StrengthBar3"
-                                       Fill="{DynamicResource MaterialDesign.Brush.Divider}" />
+                                       Fill="{DynamicResource StrengthEmptyBrush}" />
                         </Grid>
 
                         <TextBlock Grid.Column="1"

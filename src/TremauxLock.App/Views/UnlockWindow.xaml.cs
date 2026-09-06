@@ -86,10 +86,10 @@ public partial class UnlockWindow : Window
         bool isRecovery = _vm.UseRecoveryKey;
 
         // Visual dos botões de aba
-        var primaryBrush = FindResource("MaterialDesign.Brush.Primary") as Brush;
+        var primaryBrush = TryFindResource("MaterialDesign.Brush.Primary") as Brush ?? Brushes.DarkSlateBlue;
         var onPrimaryBrush = Brushes.White;
         var transparentBrush = Brushes.Transparent;
-        var defaultForeground = FindResource("MaterialDesign.Brush.Foreground") as Brush;
+        var defaultForeground = TryFindResource("MaterialDesign.Brush.Foreground") as Brush ?? Brushes.White;
 
         if (!isRecovery)
         {

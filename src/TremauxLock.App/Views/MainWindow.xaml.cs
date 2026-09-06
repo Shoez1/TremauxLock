@@ -36,26 +36,26 @@ public partial class MainWindow : Window
         var (dotBrush, pillBgBrush, icon, heroPackIcon) = _vm.State switch
         {
             VaultStateKind.Unlocked => (
-                FindResource("UnlockedBrush") as Brush ?? Brushes.Green,
-                FindResource("UnlockedSoftBrush") as Brush ?? Brushes.LightGreen,
+                TryFindResource("UnlockedBrush") as Brush ?? Brushes.Green,
+                TryFindResource("UnlockedSoftBrush") as Brush ?? Brushes.LightGreen,
                 "🔓",
                 PackIconKind.LockOpenVariantOutline
             ),
             VaultStateKind.Locked => (
-                FindResource("LockedBrush") as Brush ?? Brushes.Red,
-                FindResource("LockedSoftBrush") as Brush ?? Brushes.MistyRose,
+                TryFindResource("LockedBrush") as Brush ?? Brushes.Red,
+                TryFindResource("LockedSoftBrush") as Brush ?? Brushes.MistyRose,
                 "🛡️",
                 PackIconKind.ShieldBugOutline
             ),
             VaultStateKind.Inconsistent => (
-                FindResource("InconsistentBrush") as Brush ?? Brushes.Orange,
-                FindResource("InconsistentSoftBrush") as Brush ?? Brushes.Wheat,
+                TryFindResource("InconsistentBrush") as Brush ?? Brushes.Orange,
+                TryFindResource("InconsistentSoftBrush") as Brush ?? Brushes.Wheat,
                 "⚠️",
                 PackIconKind.AlertDecagramOutline
             ),
             _ => (
-                FindResource("EmptyBrush") as Brush ?? Brushes.Gray,
-                FindResource("EmptySoftBrush") as Brush ?? Brushes.LightGray,
+                TryFindResource("EmptyBrush") as Brush ?? Brushes.Gray,
+                TryFindResource("EmptySoftBrush") as Brush ?? Brushes.LightGray,
                 "⚡",
                 PackIconKind.CodeJson
             )

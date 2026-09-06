@@ -45,6 +45,11 @@
     <SolidColorBrush x:Key="StrengthWeak" Color="#F43F5E" />
     <SolidColorBrush x:Key="StrengthFair" Color="#F59E0B" />
     <SolidColorBrush x:Key="StrengthStrong" Color="#10B981" />
+    <SolidColorBrush x:Key="StrengthEmptyBrush" Color="#30718096" />
+
+    <!-- Divisores e bordas garantidos para o tema -->
+    <SolidColorBrush x:Key="MaterialDesign.Brush.Divider" Color="#20808080" />
+    <SolidColorBrush x:Key="BorderDividerBrush" Color="#20808080" />
 
     <!-- Superfícies sutis -->
     <SolidColorBrush x:Key="SoftBackgroundLight" Color="#F8FAFC" />

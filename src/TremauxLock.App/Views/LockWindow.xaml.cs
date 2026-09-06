@@ -59,10 +59,12 @@ public partial class LockWindow : Window
     {
         double strength = _vm.PasswordStrength;
 
-        var weakBrush = FindResource("StrengthWeak") as Brush ?? Brushes.Red;
-        var fairBrush = FindResource("StrengthFair") as Brush ?? Brushes.Orange;
-        var strongBrush = FindResource("StrengthStrong") as Brush ?? Brushes.Green;
-        var emptyBrush = FindResource("MaterialDesign.Brush.Divider") as Brush ?? Brushes.LightGray;
+        var weakBrush = TryFindResource("StrengthWeak") as Brush ?? Brushes.Red;
+        var fairBrush = TryFindResource("StrengthFair") as Brush ?? Brushes.Orange;
+        var strongBrush = TryFindResource("StrengthStrong") as Brush ?? Brushes.Green;
+        var emptyBrush = TryFindResource("StrengthEmptyBrush") as Brush 
+            ?? TryFindResource("MaterialDesign.Brush.Divider") as Brush 
+            ?? new SolidColorBrush(Color.FromArgb(40, 128, 128, 128));
 
         Brush activeBrush = strength < 0.35 ? weakBrush : strength < 0.65 ? fairBrush : strongBrush;
 
