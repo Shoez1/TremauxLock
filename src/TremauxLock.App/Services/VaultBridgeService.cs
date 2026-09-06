@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -6,20 +7,84 @@ using System.Threading.Tasks;
 namespace TremauxLock.App.Services;
 
 /// <summary>
-/// Thin bridge between the WPF ViewModels and the TremauxLock.Core VaultService.
-/// Resolves the application directory and wraps VaultService calls with
-/// progress and cancellation support.
+/// Ponte entre os ViewModels do WPF e o VaultService do TremauxLock.Core.
+/// Garante que a pasta do cofre 'private' seja sempre resolvida e criada
+/// exatamente no mesmo diretorio onde o arquivo .exe esta sendo executado.
 /// </summary>
 public sealed class VaultBridgeService
 {
     private readonly VaultService _inner;
 
+    public string ApplicationDirectory => _inner.ApplicationDirectory;
+    public string WorkingFolderPath => _inner.WorkingFolderPath;
+    public string LockedFolderPath => _inner.LockedFolderPath;
+    public string MetadataPath => _inner.MetadataPath;
+
     public VaultBridgeService()
     {
-        // The vault lives next to the executable, same as the original app
-        string appDir = AppContext.BaseDirectory;
+        // Obtem o diretorio real onde o executavel (.exe) esta no disco
+        string appDir = ResolveExecutableDirectory();
+        
         _inner = new VaultService(appDir);
         _inner.EnsureWorkspace();
+        
+        // Garante que a pasta 'private' exista se o cofre nao estiver bloqueado
+        EnsureWorkingFolderExists();
+    }
+
+    /// <summary>
+    /// Resolve com precisao o caminho do diretorio onde o executavel .exe esta no Windows,
+    /// mesmo em publicacoes Single-File (.NET bundle).
+    /// </summary>
+    public static string ResolveExecutableDirectory()
+    {
+        // 1. Environment.ProcessPath aponta com precisao para o .exe real no disco
+        string? processPath = Environment.ProcessPath;
+        if (!string.IsNullOrWhiteSpace(processPath))
+        {
+            string? dir = Path.GetDirectoryName(processPath);
+            if (!string.IsNullOrWhiteSpace(dir) && Directory.Exists(dir))
+            {
+                return dir;
+            }
+        }
+
+        // 2. Process.GetCurrentProcess().MainModule?.FileName
+        try
+        {
+            using var proc = Process.GetCurrentProcess();
+            string? modulePath = proc.MainModule?.FileName;
+            if (!string.IsNullOrWhiteSpace(modulePath))
+            {
+                string? dir = Path.GetDirectoryName(modulePath);
+                if (!string.IsNullOrWhiteSpace(dir) && Directory.Exists(dir))
+                {
+                    return dir;
+                }
+            }
+        }
+        catch { }
+
+        // 3. AppContext.BaseDirectory como fallback
+        return AppContext.BaseDirectory;
+    }
+
+    public void EnsureWorkingFolderExists()
+    {
+        try
+        {
+            // Se o cofre nao esta bloqueado e nem existe metadados de bloqueio,
+            // garante a criacao da pasta 'private' ao lado do exe
+            if (!Directory.Exists(_inner.LockedFolderPath) && !File.Exists(_inner.MetadataPath))
+            {
+                if (!Directory.Exists(_inner.WorkingFolderPath))
+                {
+                    Directory.CreateDirectory(_inner.WorkingFolderPath);
+                    VaultSecurity.TryHardenPath(_inner.WorkingFolderPath);
+                }
+            }
+        }
+        catch { }
     }
 
     // ── Overview ───────────────────────────────────────────────────────────
@@ -29,6 +94,10 @@ public sealed class VaultBridgeService
         return Task.Run(() =>
         {
             ct.ThrowIfCancellationRequested();
+            
+            // Garante a existencia da pasta de trabalho se aplicavel
+            EnsureWorkingFolderExists();
+
             var ov = _inner.GetOverview();
             return new VaultOverviewDto
             {

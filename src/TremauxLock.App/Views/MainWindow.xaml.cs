@@ -107,8 +107,17 @@ public partial class MainWindow : Window
         {
             if (!string.IsNullOrEmpty(_vm.WorkingFolderPath))
             {
-                System.IO.Directory.CreateDirectory(_vm.WorkingFolderPath);
-                System.Diagnostics.Process.Start("explorer.exe", _vm.WorkingFolderPath);
+                if (!System.IO.Directory.Exists(_vm.WorkingFolderPath))
+                {
+                    System.IO.Directory.CreateDirectory(_vm.WorkingFolderPath);
+                    VaultSecurity.TryHardenPath(_vm.WorkingFolderPath);
+                }
+
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = _vm.WorkingFolderPath,
+                    UseShellExecute = true
+                });
             }
         }
         catch (Exception ex)

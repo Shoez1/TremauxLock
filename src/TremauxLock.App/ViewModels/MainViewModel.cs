@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -77,7 +78,20 @@ public partial class MainViewModel : ObservableObject
     {
         try
         {
-            System.Diagnostics.Process.Start("explorer.exe", WorkingFolderPath);
+            if (!string.IsNullOrEmpty(WorkingFolderPath))
+            {
+                if (!Directory.Exists(WorkingFolderPath))
+                {
+                    Directory.CreateDirectory(WorkingFolderPath);
+                    VaultSecurity.TryHardenPath(WorkingFolderPath);
+                }
+
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = WorkingFolderPath,
+                    UseShellExecute = true
+                });
+            }
         }
         catch (Exception ex)
         {
@@ -85,7 +99,7 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
-    private bool CanOpenFolder() => IsUnlocked;
+    private bool CanOpenFolder() => !IsLocked;
 
     [RelayCommand]
     private async Task RefreshAsync()
