@@ -14,6 +14,7 @@ namespace TremauxLock
         Empty,
         Unlocked,
         Locked,
+        Hidden,
         Inconsistent
     }
 
@@ -79,6 +80,8 @@ namespace TremauxLock
             WorkingFolderPath = Path.Combine(applicationDirectory, "private");
             LockedFolderPath = Path.Combine(applicationDirectory, "private.locked");
             MetadataPath = Path.Combine(applicationDirectory, "private.vault.json");
+            HiddenFolderPath = Path.Combine(applicationDirectory, "private.hidden");
+            HideMetadataPath = Path.Combine(applicationDirectory, "private.hide.json");
         }
 
         public string ApplicationDirectory { get; }
@@ -89,8 +92,18 @@ namespace TremauxLock
 
         public string MetadataPath { get; }
 
+        public string HiddenFolderPath { get; }
+
+        public string HideMetadataPath { get; }
+
         public void EnsureWorkspace()
         {
+            if (Directory.Exists(HiddenFolderPath) || File.Exists(HideMetadataPath))
+            {
+                TryHardenKnownVaultPaths();
+                return;
+            }
+
             if (!Directory.Exists(WorkingFolderPath) && !Directory.Exists(LockedFolderPath))
             {
                 Directory.CreateDirectory(WorkingFolderPath);
@@ -104,15 +117,17 @@ namespace TremauxLock
             bool hasUnlockedFolder = Directory.Exists(WorkingFolderPath);
             bool hasLockedFolder = Directory.Exists(LockedFolderPath);
             bool hasMetadata = File.Exists(MetadataPath);
+            bool hasHiddenFolder = Directory.Exists(HiddenFolderPath);
+            bool hasHideMetadata = File.Exists(HideMetadataPath);
 
-            if (!hasUnlockedFolder && !hasLockedFolder && !hasMetadata)
+            if (!hasUnlockedFolder && !hasLockedFolder && !hasMetadata && !hasHiddenFolder && !hasHideMetadata)
             {
                 Directory.CreateDirectory(WorkingFolderPath);
                 VaultSecurity.TryHardenPath(WorkingFolderPath);
                 hasUnlockedFolder = true;
             }
 
-            if (hasUnlockedFolder && !hasLockedFolder && !hasMetadata)
+            if (hasUnlockedFolder && !hasLockedFolder && !hasMetadata && !hasHiddenFolder && !hasHideMetadata)
             {
                 string[] files = EnumerateVaultFiles(WorkingFolderPath);
                 long totalBytes = files.Sum(file => new FileInfo(file).Length);
@@ -128,7 +143,7 @@ namespace TremauxLock
                 };
             }
 
-            if (!hasUnlockedFolder && hasLockedFolder && hasMetadata)
+            if (!hasUnlockedFolder && hasLockedFolder && hasMetadata && !hasHiddenFolder && !hasHideMetadata)
             {
                 VaultMetadata metadata;
                 try
@@ -159,6 +174,40 @@ namespace TremauxLock
                     LockedFolderPath = LockedFolderPath,
                     MetadataPath = MetadataPath,
                     LockedAtUtc = lockedAtUtc
+                };
+            }
+
+            if (!hasUnlockedFolder && !hasLockedFolder && !hasMetadata && hasHiddenFolder && hasHideMetadata)
+            {
+                HideMetadata hideMetadata;
+                try
+                {
+                    hideMetadata = LoadHideMetadata();
+                }
+                catch
+                {
+                    return new VaultOverview
+                    {
+                        State = VaultState.Inconsistent,
+                        WorkingFolderPath = WorkingFolderPath,
+                        LockedFolderPath = LockedFolderPath,
+                        MetadataPath = MetadataPath
+                    };
+                }
+
+                DateTimeOffset? hiddenAtUtc = DateTimeOffset.TryParse(hideMetadata.HiddenUtc, out DateTimeOffset parsedHiddenAt)
+                    ? parsedHiddenAt
+                    : null;
+
+                return new VaultOverview
+                {
+                    State = VaultState.Hidden,
+                    FileCount = hideMetadata.FileCount,
+                    TotalBytes = hideMetadata.TotalBytes,
+                    WorkingFolderPath = WorkingFolderPath,
+                    LockedFolderPath = LockedFolderPath,
+                    MetadataPath = MetadataPath,
+                    LockedAtUtc = hiddenAtUtc
                 };
             }
 
@@ -203,18 +252,23 @@ namespace TremauxLock
             VaultOverview overview = GetOverview();
             if (overview.State == VaultState.Locked)
             {
-                throw new InvalidOperationException("O cofre ja esta bloqueado.");
+                throw new InvalidOperationException("A pasta ja esta protegida.");
+            }
+
+            if (overview.State == VaultState.Hidden)
+            {
+                throw new InvalidOperationException("A pasta esta oculta no modo rapido. Mostre o conteudo antes de proteger a pasta.");
             }
 
             if (overview.State == VaultState.Inconsistent)
             {
-                throw new InvalidOperationException("O cofre esta em um estado inconsistente. Verifique as pastas private/private.locked antes de continuar.");
+                throw new InvalidOperationException("Os dados estao em estado inconsistente. Verifique as pastas private/private.locked antes de continuar.");
             }
 
             string[] files = EnumerateVaultFiles(WorkingFolderPath);
             if (files.Length == 0)
             {
-                throw new InvalidOperationException("A pasta private esta vazia. Adicione arquivos antes de bloquear o cofre.");
+                throw new InvalidOperationException("A pasta private esta vazia. Adicione arquivos antes de proteger a pasta.");
             }
 
             string tempLockedDirectory = LockedFolderPath + ".pending";
@@ -310,7 +364,7 @@ namespace TremauxLock
 
                 progress?.Report(new VaultProgress
                 {
-                    Step = "Cofre bloqueado com sucesso",
+                    Step = "Pasta protegida com sucesso",
                     Current = files.Length,
                     Total = files.Length
                 });
@@ -363,9 +417,14 @@ namespace TremauxLock
         private UnlockResult UnlockVault(string secret, bool isRecoveryKey, IProgress<VaultProgress>? progress, CancellationToken cancellationToken)
         {
             VaultOverview overview = GetOverview();
+            if (overview.State == VaultState.Hidden)
+            {
+                throw new InvalidOperationException("A pasta esta oculta no modo rapido. Use Mostrar para restaurar o conteudo.");
+            }
+
             if (overview.State != VaultState.Locked)
             {
-                throw new InvalidOperationException("Nao existe cofre bloqueado para restaurar.");
+                throw new InvalidOperationException("Nao existe pasta protegida para restaurar.");
             }
 
             if (Directory.Exists(WorkingFolderPath))
@@ -390,7 +449,7 @@ namespace TremauxLock
             if (unexpectedFiles.Length > 0)
             {
                 CryptographicOperations.ZeroMemory(masterKey);
-                throw new VaultIntegrityException("O cofre bloqueado contem arquivos inesperados. Remova itens nao criptografados de private.locked antes de continuar.");
+                throw new VaultIntegrityException("A pasta protegida contem arquivos inesperados. Remova itens nao criptografados de private.locked antes de continuar.");
             }
 
             string[] encryptedFiles = lockedFiles
@@ -400,13 +459,13 @@ namespace TremauxLock
             if (encryptedFiles.Length == 0)
             {
                 CryptographicOperations.ZeroMemory(masterKey);
-                throw new VaultIntegrityException("O cofre bloqueado nao contem arquivos criptografados.");
+                throw new VaultIntegrityException("A pasta protegida nao contem arquivos criptografados.");
             }
 
             if (encryptedFiles.Length != metadata.FileCount)
             {
                 CryptographicOperations.ZeroMemory(masterKey);
-                throw new VaultIntegrityException("A quantidade de arquivos criptografados nao bate com os metadados do cofre.");
+                throw new VaultIntegrityException("A quantidade de arquivos criptografados nao bate com os metadados da protecao.");
             }
 
             string tempUnlockedDirectory = WorkingFolderPath + ".pending";
@@ -453,7 +512,7 @@ namespace TremauxLock
 
                 if (restoredFileCount != metadata.FileCount || restoredBytes != metadata.TotalBytes)
                 {
-                    throw new VaultIntegrityException("O cofre restaurado nao bate com os metadados. Os dados criptografados podem estar incompletos.");
+                    throw new VaultIntegrityException("A pasta restaurada nao bate com os metadados. Os dados criptografados podem estar incompletos.");
                 }
 
                 Directory.Move(LockedFolderPath, lockedBackupDirectory);
@@ -467,12 +526,12 @@ namespace TremauxLock
                 }
                 catch (Exception ex)
                 {
-                    backupWarning = $"O cofre foi restaurado, mas os dados criptografados temporarios em '{lockedBackupDirectory}' nao foram removidos automaticamente: {ex.Message}";
+                    backupWarning = $"A pasta foi restaurada, mas os dados criptografados temporarios em '{lockedBackupDirectory}' nao foram removidos automaticamente: {ex.Message}";
                 }
 
                 progress?.Report(new VaultProgress
                 {
-                    Step = "Cofre desbloqueado com sucesso",
+                    Step = "Pasta restaurada com sucesso",
                     Current = encryptedFiles.Length,
                     Total = encryptedFiles.Length
                 });
@@ -513,19 +572,55 @@ namespace TremauxLock
             }
             catch (JsonException ex)
             {
-                throw new VaultIntegrityException("Nao foi possivel ler os metadados do cofre.", ex);
+                throw new VaultIntegrityException("Nao foi possivel ler os metadados da protecao.", ex);
             }
             catch (NotSupportedException ex)
             {
-                throw new VaultIntegrityException("Nao foi possivel ler os metadados do cofre.", ex);
+                throw new VaultIntegrityException("Nao foi possivel ler os metadados da protecao.", ex);
             }
 
             if (metadata == null)
             {
-                throw new VaultIntegrityException("Nao foi possivel ler os metadados do cofre.");
+                throw new VaultIntegrityException("Nao foi possivel ler os metadados da protecao.");
             }
 
             ValidateMetadata(metadata);
+            return metadata;
+        }
+
+        private HideMetadata LoadHideMetadata()
+        {
+            HideMetadata? metadata;
+            try
+            {
+                string json = File.ReadAllText(HideMetadataPath, Utf8NoBom);
+                metadata = JsonSerializer.Deserialize<HideMetadata>(json);
+            }
+            catch (JsonException ex)
+            {
+                throw new VaultIntegrityException("Nao foi possivel ler os metadados da ocultacao.", ex);
+            }
+            catch (NotSupportedException ex)
+            {
+                throw new VaultIntegrityException("Nao foi possivel ler os metadados da ocultacao.", ex);
+            }
+
+            if (metadata == null)
+            {
+                throw new VaultIntegrityException("Nao foi possivel ler os metadados da ocultacao.");
+            }
+
+            if (metadata.Version != HideMetadata.CurrentVersion
+                || metadata.HiddenFolderName != "private.hidden"
+                || metadata.FileCount <= 0
+                || metadata.TotalBytes < 0
+                || !DateTimeOffset.TryParse(metadata.HiddenUtc, out _)
+                || string.IsNullOrWhiteSpace(metadata.PasswordSaltBase64)
+                || string.IsNullOrWhiteSpace(metadata.PasswordHashBase64))
+            {
+                throw new VaultIntegrityException("Os metadados da ocultacao estao invalidos.");
+            }
+
             return metadata;
         }
 
@@ -578,23 +673,23 @@ namespace TremauxLock
             if (metadata.Version != VaultMetadata.CurrentVersion
                 && metadata.Version != VaultMetadata.LegacyPasswordNormalizationVersion)
             {
-                throw new VaultIntegrityException("Versao de metadados do cofre nao suportada.");
+                throw new VaultIntegrityException("Versao de metadados da protecao nao suportada.");
             }
 
             if (metadata.WorkingFolderName != "private" || metadata.LockedFolderName != "private.locked")
             {
-                throw new VaultIntegrityException("Os metadados do cofre apontam para pastas inesperadas.");
+                throw new VaultIntegrityException("Os metadados da protecao apontam para pastas inesperadas.");
             }
 
             if (metadata.FileCount <= 0 || metadata.TotalBytes < 0)
             {
-                throw new VaultIntegrityException("Os metadados do cofre contem contagem ou tamanho invalido.");
+                throw new VaultIntegrityException("Os metadados da protecao contem contagem ou tamanho invalido.");
             }
 
             if (!DateTimeOffset.TryParse(metadata.CreatedUtc, out _)
                 || !DateTimeOffset.TryParse(metadata.LockedUtc, out _))
             {
-                throw new VaultIntegrityException("Os metadados do cofre contem datas invalidas.");
+                throw new VaultIntegrityException("Os metadados da protecao contem datas invalidas.");
             }
 
             ValidateKdfMetadata(metadata.PasswordIterations, metadata.PasswordSaltBase64, metadata.WrappedMasterKeyByPassword, "senha");
@@ -605,7 +700,7 @@ namespace TremauxLock
         {
             if (iterations < VaultCrypto.MinimumIterations || iterations > VaultCrypto.MaximumIterations)
             {
-                throw new VaultIntegrityException($"Os metadados do cofre contem iteracoes invalidas para {label}.");
+                throw new VaultIntegrityException($"Os metadados da protecao contem iteracoes invalidas para {label}.");
             }
 
             byte[] salt = DecodeBase64Field(saltBase64, $"salt da {label}", VaultCrypto.SaltSize);
@@ -618,7 +713,7 @@ namespace TremauxLock
         {
             if (string.IsNullOrWhiteSpace(value))
             {
-                throw new VaultIntegrityException($"Os metadados do cofre nao contem {fieldName}.");
+                throw new VaultIntegrityException($"Os metadados da protecao nao contem {fieldName}.");
             }
 
             byte[] decoded;
@@ -628,13 +723,13 @@ namespace TremauxLock
             }
             catch (FormatException ex)
             {
-                throw new VaultIntegrityException($"Os metadados do cofre contem {fieldName} invalido.", ex);
+                throw new VaultIntegrityException($"Os metadados da protecao contem {fieldName} invalido.", ex);
             }
 
             if (decoded.Length != expectedLength)
             {
                 CryptographicOperations.ZeroMemory(decoded);
-                throw new VaultIntegrityException($"Os metadados do cofre contem {fieldName} com tamanho invalido.");
+                throw new VaultIntegrityException($"Os metadados da protecao contem {fieldName} com tamanho invalido.");
             }
 
             return decoded;
@@ -839,7 +934,7 @@ namespace TremauxLock
 
             if (!fullDestination.StartsWith(rootWithSeparator, StringComparison.OrdinalIgnoreCase))
             {
-                throw new VaultIntegrityException("O cofre contem um caminho de arquivo inseguro.");
+                throw new VaultIntegrityException("Os dados contem um caminho de arquivo inseguro.");
             }
 
             return fullDestination;
@@ -861,6 +956,8 @@ namespace TremauxLock
             VaultSecurity.TryHardenPath(WorkingFolderPath);
             VaultSecurity.TryHardenPath(LockedFolderPath);
             VaultSecurity.TryHardenPath(MetadataPath);
+            VaultSecurity.TryHardenPath(HiddenFolderPath);
+            VaultSecurity.TryHardenPath(HideMetadataPath);
         }
 
         private void ApplyHiddenPresentation()

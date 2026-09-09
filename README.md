@@ -1,42 +1,29 @@
-# TremauxLock
+# TremauxLock (win-x64)
 
-TremauxLock e um cofre local para Windows. Ele protege arquivos colocados na pasta `private` usando criptografia autenticada, senha e chave de recuperacao. O foco e ser simples, reversivel e claro para o usuario.
+TremauxLock e um ocultador local de pastas para Windows. Ele esconde os arquivos colocados na pasta `private` em menos de 1 segundo, mesmo com varios GBs. O foco e ser simples, instantaneo e reversivel.
+
+> Isto NAO e criptografia: o conteudo continua em claro dentro de `private.hidden`, so some da vista. Esconde de curiosos, nao de analise tecnica.
 
 ## O que ele faz
 
 - Cria uma pasta `private` ao lado do executavel.
-- Bloqueia o conteudo em `private.locked` com AES-GCM.
-- Protege a chave mestra com PBKDF2-SHA256.
-- Gera uma chave de recuperacao separada a cada bloqueio.
-- Restaura os arquivos com senha ou chave de recuperacao.
-- Mantem o escopo limitado a pasta do cofre, sem varrer o PC inteiro.
+- Oculta `private` em `private.hidden` com uma senha simples (minimo 4 caracteres).
+- Mostra a pasta de volta com a mesma senha.
+- Pausa novas tentativas por 15 segundos apos 5 senhas erradas.
+- Mantem o escopo limitado a pasta do app, sem varrer o PC inteiro.
 
-## Melhorias recentes
+## Estrutura das pastas
 
-- Interface principal redesenhada com visual Windows moderno, melhor hierarquia e acoes mais claras.
-- Criptografia de arquivos em blocos (`TMX3`), evitando carregar arquivos grandes inteiros na memoria.
-- Compatibilidade para desbloquear arquivos antigos no formato `TMX2`.
-- Enumeracao mais segura da pasta `private`, ignorando pontos de reparse para evitar seguir atalhos/junctions.
-- Validacao de integridade adicional ao restaurar o cofre.
-- Validacao rigorosa dos metadados do cofre antes de derivar chaves.
-- Senhas novas preservam hifens, espacos e maiusculas/minusculas exatamente como digitadas.
-- Arquivos temporarios em claro passam por sobrescrita simples antes da exclusao, quando o sistema permite.
-- A chave copiada para a area de transferencia e limpa automaticamente se continuar igual apos 60 segundos.
-- Botoes sem timers permanentes, reduzindo trabalho desnecessario da UI.
-
-## Estrutura do cofre
-
-- `private`: pasta de trabalho em claro quando o cofre esta aberto.
-- `private.locked`: conteudo criptografado quando o cofre esta bloqueado.
-- `private.vault.json`: metadados do cofre, salts e chaves mestras protegidas.
+- `private`: pasta de trabalho em claro quando esta visivel.
+- `private.hidden` + `private.hide.json`: pasta escondida e metadados da ocultacao (a senha nunca fica gravada em claro, so o hash).
+- Pastas `private.locked` / `private.vault.json` de versoes com criptografia nao sao abertas por esta versao; ela avisa na tela.
 
 ## Fluxo de uso
 
 1. Rode `TremauxLock.exe`.
 2. Coloque arquivos dentro da pasta `private`.
-3. Clique em `Bloquear cofre` e defina uma senha forte.
-4. Guarde a chave de recuperacao fora do computador.
-5. Para restaurar, use `Desbloquear` ou `Chave`.
+3. Clique em `Ocultar pasta` e defina uma senha simples.
+4. Para restaurar, clique em `Mostrar pasta` e digite a senha.
 
 ## Build rapido
 
@@ -61,8 +48,6 @@ dotnet publish .\LockerApp.csproj -c Release -r win-x64 --self-contained true --
 
 ## Observacoes de seguranca
 
-- O projeto e recuperavel por design. Ele nao tenta criar bloqueio irreversivel.
-- A chave de recuperacao precisa ficar fora da pasta do app.
-- A remocao de arquivos em claro tenta sobrescrever os dados antes de excluir, mas SSDs, snapshots, cache e journaling do sistema podem manter copias fora do controle do app.
-- Nomes e tamanhos dos arquivos ainda podem aparecer nos metadados/estrutura local do cofre; proteja a pasta do app com permissoes adequadas do Windows.
+- Por design, a ocultacao e reversivel com a senha. Nao ha chave de recuperacao: se esquecer a senha, nao ha como mostrar a pasta pelo app.
+- Nomes, tamanhos e conteudo dos arquivos continuam legiveis para quem localizar `private.hidden`; proteja a pasta do app com permissoes adequadas do Windows.
 - O app nao deve ser usado em arquivos de terceiros sem permissao.

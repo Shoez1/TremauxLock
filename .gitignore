@@ -3,11 +3,14 @@ obj/
 dist/
 private/
 private.locked/
+private.hidden/
 private.pending/
 *.backup/
 *.pending/
 *.log
 private.vault.json
 private.vault.json.pending
+private.hide.json
+private.hide.json.pending
 *.user
 *.vault-recovery.txt

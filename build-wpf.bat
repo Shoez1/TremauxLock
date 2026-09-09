@@ -20,5 +20,5 @@ if exist "%OUTDIR%\*.dll" del /q "%OUTDIR%\*.dll"
 echo.
 echo ============================================================
 echo  [OK] Executavel portatil gerado com sucesso:
-echo       %OUTDIR%\TremauxLock.exe
+echo       %OUTDIR%\TremauxLockPro.exe
 echo ============================================================

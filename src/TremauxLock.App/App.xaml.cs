@@ -20,7 +20,7 @@ public partial class App : Application
             ex.Handled = true;
             MessageBox.Show(
                 $"Erro inesperado:\n\n{ex.Exception.Message}\n\nDetalhes em crash.log",
-                "TremauxLock — Erro",
+                "TremauxLockPro — Erro",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
             Shutdown(1);

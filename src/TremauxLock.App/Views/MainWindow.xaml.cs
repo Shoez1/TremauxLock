@@ -66,7 +66,7 @@ public partial class MainWindow : Window
         StatusPillBorder.Background = pillBgBrush;
         HeroStatusIcon.Kind = heroPackIcon;
         HeroStatusIcon.Foreground = dotBrush;
-        Title = $"{icon} TremauxLock // Ofuscador Criptográfico";
+        Title = $"{icon} TremauxLockPro // Ofuscador Criptográfico";
     }
 
     // ── Button event handlers ──────────────────────────────────────────────

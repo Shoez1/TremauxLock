@@ -8,7 +8,9 @@ namespace TremauxLock
     {
         CreatePassword,
         UnlockWithPassword,
-        UnlockWithRecoveryKey
+        UnlockWithRecoveryKey,
+        CreateQuickPassword,
+        UnlockQuickPassword
     }
 
     internal sealed class CredentialDialog : Form
@@ -43,6 +45,7 @@ namespace TremauxLock
             int h = mode switch
             {
                 CredentialDialogMode.CreatePassword => 400,
+                CredentialDialogMode.CreateQuickPassword => 400,
                 CredentialDialogMode.UnlockWithRecoveryKey => 380,
                 _ => 300
             };
@@ -59,8 +62,10 @@ namespace TremauxLock
 
             lblTitle.Text = mode switch
             {
-                CredentialDialogMode.CreatePassword => "Definir senha do cofre",
-                CredentialDialogMode.UnlockWithPassword => "Desbloquear com senha",
+                CredentialDialogMode.CreatePassword => "Definir senha",
+                CredentialDialogMode.UnlockWithPassword => "Desbloquear",
+                CredentialDialogMode.CreateQuickPassword => "Ocultar pasta",
+                CredentialDialogMode.UnlockQuickPassword => "Mostrar pasta",
                 _ => "Usar chave de recuperacao"
             };
 
@@ -70,10 +75,18 @@ namespace TremauxLock
                 Width = ClientSize.Width - 48,
                 Caption = mode == CredentialDialogMode.CreatePassword
                     ? "Nova senha"
-                    : "Senha",
+                    : mode == CredentialDialogMode.CreateQuickPassword
+                        ? "Nova senha simples"
+                        : mode == CredentialDialogMode.UnlockQuickPassword
+                            ? "Senha da ocultacao"
+                            : "Senha",
                 PlaceholderText = mode == CredentialDialogMode.CreatePassword
                     ? $"Minimo {VaultCrypto.MinimumPasswordLength} caracteres"
-                    : "Senha do cofre",
+                    : mode == CredentialDialogMode.CreateQuickPassword
+                        ? $"Minimo {QuickHideService.MinimumPasswordLength} caracteres"
+                        : mode == CredentialDialogMode.UnlockQuickPassword
+                            ? "Senha usada ao ocultar"
+                            : "Senha",
                 UsePassword = mode != CredentialDialogMode.UnlockWithRecoveryKey,
                 MaxLength = MaximumPasswordLength
             };
@@ -88,7 +101,8 @@ namespace TremauxLock
                 UsePassword = true,
                 MaxLength = MaximumPasswordLength
             };
-            fieldConfirm.Visible = mode == CredentialDialogMode.CreatePassword;
+            fieldConfirm.Visible = mode == CredentialDialogMode.CreatePassword
+                || mode == CredentialDialogMode.CreateQuickPassword;
 
             txtRecovery = new TextBox
             {
@@ -178,7 +192,28 @@ namespace TremauxLock
                     Secret = fieldPassword.TextValue;
                     break;
 
+                case CredentialDialogMode.CreateQuickPassword:
+                    if (fieldPassword.TextValue.Length < QuickHideService.MinimumPasswordLength)
+                    {
+                        MessageBox.Show(
+                            $"A senha simples precisa ter pelo menos {QuickHideService.MinimumPasswordLength} caracteres.",
+                            Text,
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    if (fieldPassword.TextValue != fieldConfirm.TextValue)
+                    {
+                        MessageBox.Show("As senhas nao coincidem.", Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    Secret = fieldPassword.TextValue;
+                    break;
+
                 case CredentialDialogMode.UnlockWithPassword:
+                case CredentialDialogMode.UnlockQuickPassword:
                     if (string.IsNullOrWhiteSpace(fieldPassword.TextValue))
                     {
                         MessageBox.Show("Informe a senha.", Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);

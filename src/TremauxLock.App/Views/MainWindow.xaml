@@ -6,7 +6,7 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:conv="clr-namespace:TremauxLock.App.Converters"
         mc:Ignorable="d"
-        Title="TremauxLock // Ofuscador Criptográfico"
+        Title="TremauxLockPro // Ofuscador Criptográfico"
         MinWidth="460" MinHeight="620"
         Width="460" Height="630"
         ResizeMode="CanMinimize"
@@ -58,7 +58,7 @@
                     </Border>
                     <StackPanel VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="TremauxLock"
+                            <TextBlock Text="TremauxLockPro"
                                        FontWeight="Bold"
                                        FontSize="17" />
                             <Border Margin="8,0,0,0"

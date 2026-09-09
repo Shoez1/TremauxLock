@@ -17,7 +17,13 @@
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
     <PublishReadyToRun>false</PublishReadyToRun>
+    <!-- WinForms raiz: compila SÓ os .cs da raiz. Sem isso o SDK puxa src/ e tests/ e quebra com tipos duplicados. -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="*.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="ladybug.ico" />

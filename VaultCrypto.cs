@@ -270,7 +270,7 @@ namespace TremauxLock
                         catch (CryptographicException ex)
                         {
                             CryptographicOperations.ZeroMemory(plainBuffer);
-                            throw new VaultIntegrityException("Falha ao validar os dados do cofre. O arquivo pode ter sido alterado.", ex);
+                            throw new VaultIntegrityException("Falha ao validar os dados da protecao. O arquivo pode ter sido alterado.", ex);
                         }
                     }
                     finally
@@ -364,7 +364,7 @@ namespace TremauxLock
             catch (CryptographicException ex)
             {
                 CryptographicOperations.ZeroMemory(plaintext);
-                throw new VaultIntegrityException("Falha ao validar os dados do cofre. O arquivo pode ter sido alterado.", ex);
+                throw new VaultIntegrityException("Falha ao validar os dados da protecao. O arquivo pode ter sido alterado.", ex);
             }
             finally
             {
@@ -440,7 +440,7 @@ namespace TremauxLock
             if (payload.Length != WrappedMasterKeyPayloadSize)
             {
                 CryptographicOperations.ZeroMemory(wrappingKey);
-                throw new VaultAuthenticationException("A credencial informada esta incorreta ou os metadados do cofre foram alterados.");
+                throw new VaultAuthenticationException("A credencial informada esta incorreta ou os metadados da protecao foram alterados.");
             }
 
             byte[] nonce = new byte[NonceSize];
@@ -461,7 +461,7 @@ namespace TremauxLock
             catch (CryptographicException ex)
             {
                 CryptographicOperations.ZeroMemory(masterKey);
-                throw new VaultAuthenticationException("A credencial informada esta incorreta ou os metadados do cofre foram alterados.", ex);
+                throw new VaultAuthenticationException("A credencial informada esta incorreta ou os metadados da protecao foram alterados.", ex);
             }
             finally
             {
@@ -602,17 +602,17 @@ namespace TremauxLock
         {
             if (secret == null)
             {
-                throw new VaultAuthenticationException("A credencial informada esta incorreta ou os metadados do cofre foram alterados.");
+                throw new VaultAuthenticationException("A credencial informada esta incorreta ou os metadados da protecao foram alterados.");
             }
 
             if (salt.Length != SaltSize)
             {
-                throw new VaultIntegrityException("Os metadados do cofre contem salt invalido.");
+                throw new VaultIntegrityException("Os metadados da protecao contem salt invalido.");
             }
 
             if (iterations < MinimumIterations || iterations > MaximumIterations)
             {
-                throw new VaultIntegrityException("Os metadados do cofre contem parametro de derivacao invalido.");
+                throw new VaultIntegrityException("Os metadados da protecao contem parametro de derivacao invalido.");
             }
 
             return Rfc2898DeriveBytes.Pbkdf2(
@@ -631,14 +631,14 @@ namespace TremauxLock
                 if (payload.Length != WrappedMasterKeyPayloadSize)
                 {
                     CryptographicOperations.ZeroMemory(payload);
-                    throw new VaultAuthenticationException("A credencial informada esta incorreta ou os metadados do cofre foram alterados.");
+                    throw new VaultAuthenticationException("A credencial informada esta incorreta ou os metadados da protecao foram alterados.");
                 }
 
                 return payload;
             }
             catch (FormatException ex)
             {
-                throw new VaultAuthenticationException("A credencial informada esta incorreta ou os metadados do cofre foram alterados.", ex);
+                throw new VaultAuthenticationException("A credencial informada esta incorreta ou os metadados da protecao foram alterados.", ex);
             }
         }
 

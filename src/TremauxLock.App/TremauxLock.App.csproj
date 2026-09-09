@@ -7,11 +7,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <RootNamespace>TremauxLock.App</RootNamespace>
-    <AssemblyName>TremauxLock</AssemblyName>
+    <AssemblyName>TremauxLockPro</AssemblyName>
     <ApplicationIcon>..\..\ladybug.ico</ApplicationIcon>
-    <AssemblyTitle>TremauxLock</AssemblyTitle>
-    <Product>TremauxLock</Product>
-    <Copyright>TremauxLock</Copyright>
+    <AssemblyTitle>TremauxLockPro</AssemblyTitle>
+    <Product>TremauxLockPro</Product>
+    <Copyright>TremauxLockPro</Copyright>
 
     <!-- Publicação: 100% Single File Portable (zero DLLs soltas) -->
     <PublishSingleFile>true</PublishSingleFile>
