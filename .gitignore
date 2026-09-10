@@ -1,6 +1,9 @@
 bin/
 obj/
 dist/
+.vs/
+TestResults/
+publish/
 private/
 private.locked/
 private.hidden/
