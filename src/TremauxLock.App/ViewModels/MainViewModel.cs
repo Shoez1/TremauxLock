@@ -24,12 +24,16 @@ public partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(StatusText))]
     [NotifyPropertyChangedFor(nameof(StatusSubtext))]
     [NotifyPropertyChangedFor(nameof(StatusKind))]
+    [NotifyPropertyChangedFor(nameof(HasPasswordHint))]
     private VaultStateKind _state = VaultStateKind.Empty;
 
     [ObservableProperty] private int _fileCount;
     [ObservableProperty] private string _totalSize = string.Empty;
     [ObservableProperty] private string _lockedAt = string.Empty;
     [ObservableProperty] private string _workingFolderPath = string.Empty;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasPasswordHint))]
+    private string? _passwordHint;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _busyMessage = string.Empty;
     [ObservableProperty] private string? _errorMessage;
@@ -42,6 +46,7 @@ public partial class MainViewModel : ObservableObject
     public bool IsInconsistent => State == VaultStateKind.Inconsistent;
     public bool HasFiles => !IsEmpty;
     public bool CanLockState => IsUnlocked || IsEmpty;
+    public bool HasPasswordHint => IsLocked && !string.IsNullOrWhiteSpace(PasswordHint);
 
     public string StatusText => State switch
     {
@@ -115,6 +120,8 @@ public partial class MainViewModel : ObservableObject
             TotalSize = overview.TotalSize;
             LockedAt = overview.LockedAt;
             WorkingFolderPath = overview.WorkingFolderPath;
+            PasswordHint = overview.PasswordHint;
+            OnPropertyChanged(nameof(HasPasswordHint));
             ErrorMessage = null;
         }
         catch (OperationCanceledException) { }

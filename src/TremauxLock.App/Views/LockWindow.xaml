@@ -139,6 +139,19 @@
                                  Margin="0,0,0,4"
                                  PasswordChanged="ConfirmBox_PasswordChanged" />
 
+                    <!-- Dica de senha opcional (fica em claro, nunca coloque a senha aqui) -->
+                    <TextBox x:Name="HintBox"
+                             materialDesign:HintAssist.Hint="Dica de senha (opcional, máx. 140)"
+                             materialDesign:HintAssist.IsFloating="True"
+                             Style="{StaticResource MaterialDesignTextBox}"
+                             Margin="0,12,0,0"
+                             MaxLength="140"
+                             TextWrapping="Wrap"
+                             Text="{Binding PasswordHint, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock Text="A dica fica visível na hora de desbloquear. Nunca coloque a própria senha nela."
+                               Style="{StaticResource InfoLabel}"
+                               Margin="0,4,0,0" />
+
                     <!-- Alerta de incompatibilidade -->
                     <Border x:Name="MismatchBorder"
                             CornerRadius="8"

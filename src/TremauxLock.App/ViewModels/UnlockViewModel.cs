@@ -16,12 +16,19 @@ public partial class UnlockViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(CanUnlock))]
     private string _secret = string.Empty;
 
-    [ObservableProperty] private bool _useRecoveryKey;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PromptText))]
+    [NotifyPropertyChangedFor(nameof(PlaceholderText))]
+    [NotifyPropertyChangedFor(nameof(HasPasswordHint))]
+    private bool _useRecoveryKey;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _busyMessage = string.Empty;
     [ObservableProperty] private string? _errorMessage;
     [ObservableProperty] private bool _unlockSucceeded;
     [ObservableProperty] private string? _backupWarning;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasPasswordHint))]
+    private string? _passwordHint;
 
     // ── Computed ───────────────────────────────────────────────────────────
     public bool CanUnlock => !string.IsNullOrWhiteSpace(Secret) && !IsBusy;
@@ -38,6 +45,22 @@ public partial class UnlockViewModel : ObservableObject
     public UnlockViewModel(VaultBridgeService vault)
     {
         _vault = vault;
+        _ = LoadHintAsync();
+    }
+
+    public bool HasPasswordHint => !UseRecoveryKey && !string.IsNullOrWhiteSpace(PasswordHint);
+
+    public async Task LoadHintAsync()
+    {
+        try
+        {
+            PasswordHint = await _vault.GetPasswordHintAsync(CancellationToken.None);
+            OnPropertyChanged(nameof(HasPasswordHint));
+        }
+        catch
+        {
+            PasswordHint = null;
+        }
     }
 
     // ── Commands ───────────────────────────────────────────────────────────
@@ -85,5 +108,6 @@ public partial class UnlockViewModel : ObservableObject
         ErrorMessage = null;
         OnPropertyChanged(nameof(PromptText));
         OnPropertyChanged(nameof(PlaceholderText));
+        OnPropertyChanged(nameof(HasPasswordHint));
     }
 }

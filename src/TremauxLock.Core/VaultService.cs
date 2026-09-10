@@ -33,6 +33,7 @@ namespace TremauxLock
         public string LockedFolderPath { get; init; } = string.Empty;
         public string MetadataPath { get; init; } = string.Empty;
         public DateTimeOffset? LockedAtUtc { get; init; }
+        public string? PasswordHint { get; init; }
     }
 
     public sealed class LockResult
@@ -158,7 +159,8 @@ namespace TremauxLock
                     WorkingFolderPath = WorkingFolderPath,
                     LockedFolderPath = LockedFolderPath,
                     MetadataPath = MetadataPath,
-                    LockedAtUtc = lockedAtUtc
+                    LockedAtUtc = lockedAtUtc,
+                    PasswordHint = NormalizeHintForDisplay(metadata.PasswordHint)
                 };
             }
 
@@ -173,7 +175,12 @@ namespace TremauxLock
 
         public Task<LockResult> LockVaultAsync(string password, IProgress<VaultProgress>? progress, CancellationToken cancellationToken = default)
         {
-            return Task.Run(() => LockVault(password, progress, cancellationToken), cancellationToken);
+            return Task.Run(() => LockVault(password, null, progress, cancellationToken), cancellationToken);
+        }
+
+        public Task<LockResult> LockVaultWithHintAsync(string password, string? passwordHint, IProgress<VaultProgress>? progress, CancellationToken cancellationToken = default)
+        {
+            return Task.Run(() => LockVault(password, passwordHint, progress, cancellationToken), cancellationToken);
         }
 
         public Task<UnlockResult> UnlockVaultWithPasswordAsync(string password, IProgress<VaultProgress>? progress, CancellationToken cancellationToken = default)
@@ -193,12 +200,14 @@ namespace TremauxLock
                 : Array.Empty<string>();
         }
 
-        private LockResult LockVault(string password, IProgress<VaultProgress>? progress, CancellationToken cancellationToken)
+        private LockResult LockVault(string password, string? passwordHint, IProgress<VaultProgress>? progress, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(password) || password.Length < VaultCrypto.MinimumPasswordLength)
             {
                 throw new InvalidOperationException($"Use uma senha com pelo menos {VaultCrypto.MinimumPasswordLength} caracteres.");
             }
+
+            string normalizedHint = NormalizeAndValidateHint(password, passwordHint);
 
             VaultOverview overview = GetOverview();
             if (overview.State == VaultState.Locked)
@@ -283,7 +292,8 @@ namespace TremauxLock
                     PasswordSaltBase64 = Convert.ToBase64String(passwordSalt),
                     WrappedMasterKeyByPassword = VaultCrypto.ProtectMasterKey(masterKey, password, passwordSalt, VaultCrypto.DefaultIterations),
                     RecoverySaltBase64 = Convert.ToBase64String(recoverySalt),
-                    WrappedMasterKeyByRecovery = VaultCrypto.ProtectMasterKey(masterKey, VaultCrypto.NormalizeRecoveryKey(recoveryKey), recoverySalt, VaultCrypto.DefaultIterations)
+                    WrappedMasterKeyByRecovery = VaultCrypto.ProtectMasterKey(masterKey, VaultCrypto.NormalizeRecoveryKey(recoveryKey), recoverySalt, VaultCrypto.DefaultIterations),
+                    PasswordHint = normalizedHint
                 };
 
                 WriteMetadataFile(tempMetadataPath, metadata);
@@ -599,6 +609,67 @@ namespace TremauxLock
 
             ValidateKdfMetadata(metadata.PasswordIterations, metadata.PasswordSaltBase64, metadata.WrappedMasterKeyByPassword, "senha");
             ValidateKdfMetadata(metadata.RecoveryIterations, metadata.RecoverySaltBase64, metadata.WrappedMasterKeyByRecovery, "chave de recuperacao");
+
+            metadata.PasswordHint = (metadata.PasswordHint ?? string.Empty).Trim();
+            if (metadata.PasswordHint.Length > VaultMetadata.MaxPasswordHintLength)
+            {
+                throw new VaultIntegrityException("Os metadados do cofre contem dica invalida.");
+            }
+        }
+
+        /// <summary>
+        /// Le a dica de senha em claro sem exigir a senha. Retorna null quando
+        /// nao ha dica cadastrada.
+        /// </summary>
+        public string? TryGetPasswordHint()
+        {
+            try
+            {
+                if (!File.Exists(MetadataPath))
+                {
+                    return null;
+                }
+
+                VaultMetadata metadata = LoadMetadata();
+                return NormalizeHintForDisplay(metadata.PasswordHint);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public static string NormalizeAndValidateHint(string password, string? hint)
+        {
+            string normalized = (hint ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return string.Empty;
+            }
+
+            if (normalized.Length > VaultMetadata.MaxPasswordHintLength)
+            {
+                throw new InvalidOperationException($"A dica pode ter no maximo {VaultMetadata.MaxPasswordHintLength} caracteres.");
+            }
+
+            if (normalized.Equals(password, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("A dica nao pode ser igual a senha.");
+            }
+
+            if (password.Length >= VaultCrypto.MinimumPasswordLength
+                && normalized.IndexOf(password, StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                throw new InvalidOperationException("A dica nao pode conter a propria senha.");
+            }
+
+            return normalized;
+        }
+
+        private static string? NormalizeHintForDisplay(string? hint)
+        {
+            string normalized = (hint ?? string.Empty).Trim();
+            return string.IsNullOrWhiteSpace(normalized) ? null : normalized;
         }
 
         private static void ValidateKdfMetadata(int iterations, string saltBase64, string wrappedMasterKey, string label)

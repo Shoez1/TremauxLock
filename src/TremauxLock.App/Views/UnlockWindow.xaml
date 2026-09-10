@@ -136,6 +136,25 @@
                                    Margin="0,4,0,0" />
                     </StackPanel>
 
+                    <!-- Dica de senha (lembrete em claro, sem revelar a senha) -->
+                    <Border CornerRadius="10"
+                            Background="{DynamicResource CyberCyanSoftBrush}"
+                            Padding="10,8"
+                            Margin="0,12,0,0"
+                            Visibility="{Binding HasPasswordHint, Converter={StaticResource BoolToVis}}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="LightbulbOutline"
+                                                     Width="16" Height="16"
+                                                     VerticalAlignment="Top"
+                                                     Margin="0,2,8,0" />
+                            <TextBlock TextWrapping="Wrap"
+                                       FontSize="12.5">
+                                <Run Text="Dica: " FontWeight="SemiBold" />
+                                <Run Text="{Binding PasswordHint, Mode=OneWay}" />
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
                 </StackPanel>
             </materialDesign:Card>
 

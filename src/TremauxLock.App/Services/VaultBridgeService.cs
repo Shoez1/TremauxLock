@@ -107,7 +107,8 @@ public sealed class VaultBridgeService
                 LockedAt = ov.LockedAtUtc.HasValue
                     ? ov.LockedAtUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
                     : string.Empty,
-                WorkingFolderPath = ov.WorkingFolderPath
+                WorkingFolderPath = ov.WorkingFolderPath,
+                PasswordHint = ov.PasswordHint
             };
         }, ct);
     }
@@ -116,14 +117,30 @@ public sealed class VaultBridgeService
 
     public Task<LockResultDto> LockAsync(string password, CancellationToken ct = default)
     {
+        return LockAsync(password, null, ct);
+    }
+
+    public Task<LockResultDto> LockAsync(string password, string? passwordHint, CancellationToken ct = default)
+    {
         return Task.Run(async () =>
         {
-            var result = await _inner.LockVaultAsync(password, progress: null, ct);
+            var result = string.IsNullOrWhiteSpace(passwordHint)
+                ? await _inner.LockVaultAsync(password, progress: null, ct)
+                : await _inner.LockVaultWithHintAsync(password, passwordHint, progress: null, ct);
             return new LockResultDto
             {
                 RecoveryKey = result.RecoveryKey,
                 BackupWarning = result.BackupWarning
             };
+        }, ct);
+    }
+
+    public Task<string?> GetPasswordHintAsync(CancellationToken ct = default)
+    {
+        return Task.Run(() =>
+        {
+            ct.ThrowIfCancellationRequested();
+            return _inner.TryGetPasswordHint();
         }, ct);
     }
 
@@ -168,6 +185,7 @@ public sealed class VaultOverviewDto
     public string TotalSize { get; init; } = string.Empty;
     public string LockedAt { get; init; } = string.Empty;
     public string WorkingFolderPath { get; init; } = string.Empty;
+    public string? PasswordHint { get; init; }
 }
 
 public sealed class LockResultDto

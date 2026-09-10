@@ -17,18 +17,27 @@ namespace TremauxLock
     {
         private const int MaximumPasswordLength = 1024;
         private const int MaximumRecoveryKeyInputLength = 128;
+        private const int MaximumHintLength = 140;
 
         private readonly CredentialDialogMode mode;
         private readonly Label lblTitle;
         private readonly InputField fieldPassword;
         private readonly InputField fieldConfirm;
+        private readonly InputField fieldHint;
+        private readonly Label lblHintDisplay;
         private readonly TextBox txtRecovery;
         private readonly HackerButton btnOk;
         private readonly HackerButton btnCancel;
 
         public string Secret { get; private set; } = string.Empty;
 
-        public CredentialDialog(CredentialDialogMode dialogMode)
+        /// <summary>
+        /// Dica de senha opcional informada na criacao (ja normalizada/trim).
+        /// Vazio quando o usuario nao informou dica.
+        /// </summary>
+        public string Hint { get; private set; } = string.Empty;
+
+        public CredentialDialog(CredentialDialogMode dialogMode, string? passwordHint = null)
         {
             mode = dialogMode;
             Text = "TremauxLock";
@@ -42,11 +51,19 @@ namespace TremauxLock
             Font = AppTheme.CreateBodyFont(9.5f);
             AutoScaleMode = AutoScaleMode.Font;
 
+            bool isCreate = mode == CredentialDialogMode.CreatePassword
+                || mode == CredentialDialogMode.CreateQuickPassword;
+            bool isUnlockWithHint = (mode == CredentialDialogMode.UnlockWithPassword
+                || mode == CredentialDialogMode.UnlockQuickPassword)
+                && !string.IsNullOrWhiteSpace(passwordHint);
+
             int h = mode switch
             {
-                CredentialDialogMode.CreatePassword => 400,
-                CredentialDialogMode.CreateQuickPassword => 400,
+                CredentialDialogMode.CreatePassword => 478,
+                CredentialDialogMode.CreateQuickPassword => 478,
                 CredentialDialogMode.UnlockWithRecoveryKey => 380,
+                CredentialDialogMode.UnlockWithPassword when isUnlockWithHint => 352,
+                CredentialDialogMode.UnlockQuickPassword when isUnlockWithHint => 352,
                 _ => 300
             };
             ClientSize = new Size(540, h);
@@ -69,9 +86,22 @@ namespace TremauxLock
                 _ => "Usar chave de recuperacao"
             };
 
+            lblHintDisplay = new Label
+            {
+                AutoSize = false,
+                Bounds = new Rectangle(24, 72, ClientSize.Width - 48, 40),
+                ForeColor = AppTheme.HackerYellow,
+                BackColor = AppTheme.BackgroundPrimary,
+                Font = AppTheme.CreateBodyFont(9f, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleLeft,
+                Visible = false
+            };
+
+            int passwordTop = isUnlockWithHint ? 118 : 84;
+
             fieldPassword = new InputField
             {
-                Location = new Point(24, 84),
+                Location = new Point(24, passwordTop),
                 Width = ClientSize.Width - 48,
                 Caption = mode == CredentialDialogMode.CreatePassword
                     ? "Nova senha"
@@ -94,15 +124,32 @@ namespace TremauxLock
 
             fieldConfirm = new InputField
             {
-                Location = new Point(24, 164),
+                Location = new Point(24, passwordTop + 80),
                 Width = ClientSize.Width - 48,
                 Caption = "Confirmar senha",
                 PlaceholderText = "Repita a senha",
                 UsePassword = true,
                 MaxLength = MaximumPasswordLength
             };
-            fieldConfirm.Visible = mode == CredentialDialogMode.CreatePassword
-                || mode == CredentialDialogMode.CreateQuickPassword;
+            fieldConfirm.Visible = isCreate;
+
+            fieldHint = new InputField
+            {
+                Location = new Point(24, passwordTop + 160),
+                Width = ClientSize.Width - 48,
+                Caption = "Dica de senha (opcional)",
+                PlaceholderText = "Ex: nome do primeiro pet — sem colocar a senha",
+                UsePassword = false,
+                MaxLength = MaximumHintLength
+            };
+            fieldHint.Visible = isCreate;
+
+            if (isUnlockWithHint)
+            {
+                string clean = (passwordHint ?? string.Empty).Trim();
+                lblHintDisplay.Text = $"Dica: {clean}";
+                lblHintDisplay.Visible = true;
+            }
 
             txtRecovery = new TextBox
             {
@@ -149,8 +196,10 @@ namespace TremauxLock
             CancelButton = btnCancel;
 
             Controls.Add(lblTitle);
+            Controls.Add(lblHintDisplay);
             Controls.Add(fieldPassword);
             Controls.Add(fieldConfirm);
+            Controls.Add(fieldHint);
             Controls.Add(txtRecovery);
             Controls.Add(btnOk);
             Controls.Add(btnCancel);
@@ -189,6 +238,16 @@ namespace TremauxLock
                         return;
                     }
 
+                    try
+                    {
+                        Hint = VaultService.NormalizeAndValidateHint(fieldPassword.TextValue, fieldHint.TextValue);
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        MessageBox.Show(ex.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
                     Secret = fieldPassword.TextValue;
                     break;
 
@@ -206,6 +265,16 @@ namespace TremauxLock
                     if (fieldPassword.TextValue != fieldConfirm.TextValue)
                     {
                         MessageBox.Show("As senhas nao coincidem.", Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    try
+                    {
+                        Hint = QuickHideService.NormalizeAndValidateHint(fieldPassword.TextValue, fieldHint.TextValue);
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        MessageBox.Show(ex.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
                     }
 
@@ -254,6 +323,7 @@ namespace TremauxLock
             Secret = string.Empty;
             fieldPassword.TextValue = string.Empty;
             fieldConfirm.TextValue = string.Empty;
+            fieldHint.TextValue = string.Empty;
             txtRecovery.Text = string.Empty;
         }
 
@@ -262,6 +332,7 @@ namespace TremauxLock
             if (disposing)
             {
                 ClearSecret();
+                Hint = string.Empty;
             }
 
             base.Dispose(disposing);

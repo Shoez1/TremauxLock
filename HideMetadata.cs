@@ -9,6 +9,7 @@ namespace TremauxLock
     internal sealed class HideMetadata
     {
         public const string CurrentVersion = "hide1";
+        public const int MaxPasswordHintLength = 140;
 
         public string Version { get; set; } = CurrentVersion;
         public string HiddenFolderName { get; set; } = "private.hidden";
@@ -17,5 +18,10 @@ namespace TremauxLock
         public long TotalBytes { get; set; }
         public string PasswordSaltBase64 { get; set; } = string.Empty;
         public string PasswordHashBase64 { get; set; } = string.Empty;
+        /// <summary>
+        /// Dica de senha opcional, em claro. Nunca deve conter a propria senha.
+        /// Arquivos antigos nao tem esse campo (vem vazio).
+        /// </summary>
+        public string PasswordHint { get; set; } = string.Empty;
     }
 }

@@ -18,6 +18,7 @@ public partial class LockViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(PasswordStrength))]
     [NotifyPropertyChangedFor(nameof(PasswordStrengthText))]
     [NotifyPropertyChangedFor(nameof(PasswordStrengthColor))]
+    [NotifyPropertyChangedFor(nameof(HintValidationError))]
     [NotifyPropertyChangedFor(nameof(CanLock))]
     private string _password = string.Empty;
 
@@ -25,6 +26,10 @@ public partial class LockViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(CanLock))]
     [NotifyPropertyChangedFor(nameof(PasswordsMatch))]
     private string _passwordConfirm = string.Empty;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HintValidationError))]
+    private string _passwordHint = string.Empty;
 
     // ── State ──────────────────────────────────────────────────────────────
     [ObservableProperty] private bool _isBusy;
@@ -69,6 +74,10 @@ public partial class LockViewModel : ObservableObject
 
     public int MinPasswordLength => VaultCrypto.MinimumPasswordLength;
 
+    public int MaxHintLength => VaultMetadata.MaxPasswordHintLength;
+
+    public string? HintValidationError => ComputeHintError(Password, PasswordHint);
+
     // ── Constructor ────────────────────────────────────────────────────────
     public LockViewModel(VaultBridgeService vault)
     {
@@ -80,12 +89,21 @@ public partial class LockViewModel : ObservableObject
     private async Task LockVaultAsync()
     {
         ErrorMessage = null;
+
+        string? hintError = ComputeHintError(Password, PasswordHint);
+        if (hintError != null)
+        {
+            ErrorMessage = hintError;
+            return;
+        }
+
         IsBusy = true;
         BusyMessage = "Executando ofuscação criptográfica AES-GCM...";
 
         try
         {
-            var result = await _vault.LockAsync(Password, CancellationToken.None);
+            string? hint = string.IsNullOrWhiteSpace(PasswordHint) ? null : PasswordHint.Trim();
+            var result = await _vault.LockAsync(Password, hint, CancellationToken.None);
             RecoveryKey = result.RecoveryKey;
             BackupWarning = result.BackupWarning;
             LockSucceeded = true;
@@ -100,6 +118,7 @@ public partial class LockViewModel : ObservableObject
             BusyMessage = string.Empty;
             Password = string.Empty;
             PasswordConfirm = string.Empty;
+            PasswordHint = string.Empty;
         }
     }
 
@@ -162,6 +181,33 @@ public partial class LockViewModel : ObservableObject
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────
+    private static string? ComputeHintError(string password, string hint)
+    {
+        string normalized = (hint ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(normalized))
+        {
+            return null;
+        }
+
+        if (normalized.Length > VaultMetadata.MaxPasswordHintLength)
+        {
+            return $"A dica pode ter no maximo {VaultMetadata.MaxPasswordHintLength} caracteres.";
+        }
+
+        if (normalized.Equals(password, StringComparison.OrdinalIgnoreCase))
+        {
+            return "A dica nao pode ser igual a senha.";
+        }
+
+        if (password.Length >= VaultCrypto.MinimumPasswordLength
+            && normalized.IndexOf(password, StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+            return "A dica nao pode conter a propria senha.";
+        }
+
+        return null;
+    }
+
     private static double ComputeStrength(string password)
     {
         if (password.Length < VaultCrypto.MinimumPasswordLength) return 0.15;

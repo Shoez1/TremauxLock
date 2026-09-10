@@ -228,6 +228,28 @@
                     </Grid>
                 </materialDesign:Card>
 
+                <!-- Dica de senha (lembrete em claro quando bloqueado) -->
+                <materialDesign:Card Margin="0,0,0,20"
+                                     Style="{StaticResource MetricCard}"
+                                     Visibility="{Binding HasPasswordHint, Converter={StaticResource BoolToVis}}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="LightbulbOutline"
+                                                 Width="20" Height="20"
+                                                 Opacity="0.6"
+                                                 VerticalAlignment="Top"
+                                                 Margin="0,2,10,0" />
+                        <StackPanel>
+                            <TextBlock Text="DICA DE SENHA"
+                                       Style="{StaticResource InfoLabel}"
+                                       FontFamily="Consolas, Courier New"
+                                       FontSize="10.5" />
+                            <TextBlock Text="{Binding PasswordHint}"
+                                       Style="{StaticResource InfoValue}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </StackPanel>
+                </materialDesign:Card>
+
                 <!-- ── ESTADO STANDBY // VAZIO ─────────────────────────────── -->
                 <Border Padding="24,20"
                         Margin="0,0,0,20"

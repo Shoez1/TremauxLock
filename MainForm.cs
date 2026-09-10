@@ -545,14 +545,26 @@ namespace TremauxLock
                 return;
             }
 
+            string password = dialog.Secret;
+            string savedHint = dialog.Hint;
+            dialog.ClearSecret();
+
             SetBusy(true, "Ocultando pasta...");
             try
             {
-                HideResult result = await quickHideService.HideAsync(dialog.Secret);
+                HideResult result = await quickHideService.HideAsync(password, savedHint);
+                password = string.Empty;
                 RefreshOverview();
-                MessageBox.Show(
+                string successMessage =
                     $"Pasta oculta de curiosos.\n\nArquivos: {result.FileCount}\nVolume: {VaultCrypto.FormatSize(result.TotalBytes)}\n\n" +
-                    "Atenção: isto NÃO é criptografia.",
+                    "Atenção: isto NÃO é criptografia.";
+                if (!string.IsNullOrWhiteSpace(savedHint))
+                {
+                    successMessage += $"\n\nDica salva: {savedHint}";
+                }
+
+                MessageBox.Show(
+                    successMessage,
                     "TremauxLock",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
@@ -563,6 +575,8 @@ namespace TremauxLock
             }
             finally
             {
+                password = string.Empty;
+                savedHint = string.Empty;
                 dialog.ClearSecret();
                 SetBusy(false, string.Empty);
                 RefreshOverview();
@@ -577,18 +591,23 @@ namespace TremauxLock
                 return;
             }
 
-            using var dialog = new CredentialDialog(CredentialDialogMode.UnlockQuickPassword);
+            string? savedHint = quickHideService.TryGetPasswordHint();
+            using var dialog = new CredentialDialog(CredentialDialogMode.UnlockQuickPassword, savedHint);
             if (dialog.ShowDialog(this) != DialogResult.OK)
             {
                 return;
             }
+
+            string password = dialog.Secret;
+            dialog.ClearSecret();
 
             SetBusy(true, "Mostrando pasta...");
             string? alertMessage = null;
             MessageBoxIcon alertIcon = MessageBoxIcon.Information;
             try
             {
-                ShowResult result = await quickHideService.ShowAsync(dialog.Secret);
+                ShowResult result = await quickHideService.ShowAsync(password);
+                password = string.Empty;
                 failedUnlockAttempts = 0;
                 unlockCooldownUntilUtc = DateTime.MinValue;
                 alertMessage = $"Pasta restaurada.\n\nArquivos: {result.FileCount}\nVolume: {VaultCrypto.FormatSize(result.TotalBytes)}";
@@ -599,7 +618,7 @@ namespace TremauxLock
             }
             catch (VaultAuthenticationException ex)
             {
-                alertMessage = RegisterUnlockFailure(ex.Message);
+                alertMessage = RegisterUnlockFailure(ex.Message, savedHint);
                 alertIcon = MessageBoxIcon.Warning;
             }
             catch (Exception ex)
@@ -609,6 +628,7 @@ namespace TremauxLock
             }
             finally
             {
+                password = string.Empty;
                 dialog.ClearSecret();
                 SetBusy(false, string.Empty);
                 RefreshOverview();
@@ -691,7 +711,9 @@ namespace TremauxLock
                         btnFolder.Text = "Abrir pasta";
                         btnMain.Text = "Atualizar";
                         btnMain.ButtonStyle = HackerButtonStyle.Secondary;
-                        lblFilesHint.Text = "Lista protegida por criptografia. Use a versao com criptografia para restaurar.";
+                        lblFilesHint.Text = !string.IsNullOrWhiteSpace(overview.PasswordHint)
+                            ? $"Lista protegida por criptografia. Use a versao com criptografia para restaurar.\nDica: {overview.PasswordHint}"
+                            : "Lista protegida por criptografia. Use a versao com criptografia para restaurar.";
                         lstFiles.Visible = false;
                         lblFilesHint.Visible = true;
                         break;
@@ -714,7 +736,9 @@ namespace TremauxLock
                         btnFolder.Text = "Abrir pasta";
                         btnMain.Text = cooldownActive ? "Aguarde..." : "Mostrar pasta";
                         btnMain.ButtonStyle = HackerButtonStyle.Primary;
-                        lblFilesHint.Text = "Lista oculta. Mostre a pasta para ver os arquivos.";
+                        lblFilesHint.Text = !string.IsNullOrWhiteSpace(overview.PasswordHint)
+                            ? $"Lista oculta. Mostre a pasta para ver os arquivos.\nDica: {overview.PasswordHint}"
+                            : "Lista oculta. Mostre a pasta para ver os arquivos.";
                         lstFiles.Visible = false;
                         lblFilesHint.Visible = true;
                         break;
@@ -868,19 +892,23 @@ namespace TremauxLock
             base.Dispose(disposing);
         }
 
-        private string RegisterUnlockFailure(string message)
+        private string RegisterUnlockFailure(string message, string? passwordHint = null)
         {
             failedUnlockAttempts++;
+
+            string hintSuffix = !string.IsNullOrWhiteSpace(passwordHint)
+                ? $"\n\nDica: {passwordHint.Trim()}"
+                : string.Empty;
 
             if (failedUnlockAttempts >= 5)
             {
                 failedUnlockAttempts = 0;
                 unlockCooldownUntilUtc = DateTime.UtcNow.AddSeconds(15);
                 unlockCooldownTimer.Start();
-                return $"{message}\n\nNovas tentativas foram pausadas por 15 segundos.";
+                return $"{message}{hintSuffix}\n\nNovas tentativas foram pausadas por 15 segundos.";
             }
 
-            return message;
+            return $"{message}{hintSuffix}";
         }
 
         private void RefreshCooldownState()

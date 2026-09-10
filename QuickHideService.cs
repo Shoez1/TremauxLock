@@ -30,6 +30,7 @@ namespace TremauxLock
     internal sealed class QuickHideService
     {
         public const int MinimumPasswordLength = 4;
+        public const int MaxPasswordHintLength = HideMetadata.MaxPasswordHintLength;
         private const int SaltSize = 16;
         private const int HashSize = 32;
         private static readonly JsonSerializerOptions MetadataJsonOptions = new() { WriteIndented = true };
@@ -51,9 +52,9 @@ namespace TremauxLock
 
         public string HideMetadataPath { get; }
 
-        public Task<HideResult> HideAsync(string password, CancellationToken cancellationToken = default)
+        public Task<HideResult> HideAsync(string password, string? passwordHint = null, CancellationToken cancellationToken = default)
         {
-            return Task.Run(() => Hide(password, cancellationToken), cancellationToken);
+            return Task.Run(() => Hide(password, passwordHint, cancellationToken), cancellationToken);
         }
 
         public Task<ShowResult> ShowAsync(string password, CancellationToken cancellationToken = default)
@@ -61,12 +62,14 @@ namespace TremauxLock
             return Task.Run(() => Show(password, cancellationToken), cancellationToken);
         }
 
-        public HideResult Hide(string password, CancellationToken cancellationToken = default)
+        public HideResult Hide(string password, string? passwordHint = null, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(password) || password.Length < MinimumPasswordLength)
             {
                 throw new InvalidOperationException($"Use uma senha simples com pelo menos {MinimumPasswordLength} caracteres.");
             }
+
+            string normalizedHint = NormalizeAndValidateHint(password, passwordHint);
 
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -112,7 +115,8 @@ namespace TremauxLock
                 FileCount = files.Length,
                 TotalBytes = totalBytes,
                 PasswordSaltBase64 = Convert.ToBase64String(salt),
-                PasswordHashBase64 = Convert.ToBase64String(hash)
+                PasswordHashBase64 = Convert.ToBase64String(hash),
+                PasswordHint = normalizedHint
             };
             CryptographicOperations.ZeroMemory(salt);
             CryptographicOperations.ZeroMemory(hash);
@@ -207,6 +211,57 @@ namespace TremauxLock
             };
         }
 
+        /// <summary>
+        /// Le a dica de senha em claro sem exigir a senha. Retorna null quando
+        /// nao ha pasta oculta, nao ha dica cadastrada ou os metadados estao invalidos.
+        /// A dica nunca permite recuperar a senha — serve so como lembrete.
+        /// </summary>
+        public string? TryGetPasswordHint()
+        {
+            try
+            {
+                if (!File.Exists(HideMetadataPath))
+                {
+                    return null;
+                }
+
+                HideMetadata metadata = LoadMetadata();
+                string hint = (metadata.PasswordHint ?? string.Empty).Trim();
+                return string.IsNullOrWhiteSpace(hint) ? null : hint;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public static string NormalizeAndValidateHint(string password, string? hint)
+        {
+            string normalized = (hint ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return string.Empty;
+            }
+
+            if (normalized.Length > MaxPasswordHintLength)
+            {
+                throw new InvalidOperationException($"A dica pode ter no maximo {MaxPasswordHintLength} caracteres.");
+            }
+
+            if (normalized.Equals(password, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("A dica nao pode ser igual a senha.");
+            }
+
+            if (password.Length >= MinimumPasswordLength
+                && normalized.IndexOf(password, StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                throw new InvalidOperationException("A dica nao pode conter a propria senha.");
+            }
+
+            return normalized;
+        }
+
         internal HideMetadata LoadMetadata()
         {
             HideMetadata? metadata;
@@ -259,6 +314,13 @@ namespace TremauxLock
             byte[] hash = DecodeBase64Field(metadata.PasswordHashBase64, HashSize);
             CryptographicOperations.ZeroMemory(salt);
             CryptographicOperations.ZeroMemory(hash);
+
+            // Dica e opcional e fica em claro. Arquivos antigos nao tem o campo.
+            metadata.PasswordHint = (metadata.PasswordHint ?? string.Empty).Trim();
+            if (metadata.PasswordHint.Length > MaxPasswordHintLength)
+            {
+                throw new VaultIntegrityException("Os metadados da ocultacao contem dica invalida.");
+            }
         }
 
         private static byte[] DecodeBase64Field(string? value, int expectedLength)
