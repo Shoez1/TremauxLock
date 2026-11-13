@@ -1,5 +1,5 @@
-param(
-    [string]$Project = "LockerApp.csproj",
+﻿param(
+    [string]$Project = "TremauxLock.csproj",
     [string]$Configuration = "Release",
     [string]$RuntimeIdentifier = "win-x64"
 )
@@ -52,16 +52,16 @@ try {
     Write-Log "INFO" ("Iniciando build em {0}" -f $projectRoot)
 
     if (-not (Test-Path -LiteralPath $projectPath)) {
-        throw ("Projeto '{0}' nao encontrado." -f $Project)
+        throw ("Projeto '{0}' não encontrado." -f $Project)
     }
 
     if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
-        throw "O .NET SDK nao foi encontrado no PATH. Instale o .NET 9 SDK ou superior."
+        throw "O .NET SDK não foi encontrado no PATH. Instale o .NET 9 SDK ou superior."
     }
 
     $targetFramework = Get-ProjectValue -CsprojPath $projectPath -PropertyName "TargetFramework"
     if ([string]::IsNullOrWhiteSpace($targetFramework)) {
-        throw "Nao foi possivel identificar o TargetFramework no arquivo do projeto."
+        throw "Não foi possível identificar o TargetFramework no arquivo do projeto."
     }
 
     $assemblyName = Get-ProjectValue -CsprojPath $projectPath -PropertyName "AssemblyName"
@@ -69,7 +69,7 @@ try {
         $assemblyName = [System.IO.Path]::GetFileNameWithoutExtension($projectPath)
     }
 
-    # Publica em uma pasta temporaria para nao apagar cofres salvos ao lado do exe.
+    # Publica em uma pasta temporária para não apagar cofres salvos ao lado do exe.
     $publishDir = Join-Path $projectRoot ("dist\{0}" -f $RuntimeIdentifier)
     $tempPublishDir = Join-Path $projectRoot ("obj\publish\{0}" -f $RuntimeIdentifier)
     $outputExe = Join-Path $publishDir ("{0}.exe" -f $assemblyName)
@@ -82,7 +82,7 @@ try {
     }
 
     if (Test-Path -LiteralPath $tempPublishDir) {
-        Write-Log "INFO" ("Limpando pasta temporaria de publish: {0}" -f $tempPublishDir)
+        Write-Log "INFO" ("Limpando pasta temporária de publish: {0}" -f $tempPublishDir)
         Remove-Item -LiteralPath $tempPublishDir -Recurse -Force -ErrorAction Stop
     }
     New-Item -ItemType Directory -Path $tempPublishDir -Force | Out-Null
@@ -108,13 +108,13 @@ try {
     }
 
     if (-not (Test-Path -LiteralPath $tempOutputExe)) {
-        throw ("O publish terminou, mas o EXE nao foi localizado em '{0}'." -f $tempOutputExe)
+        throw ("O publish terminou, mas o EXE não foi localizado em '{0}'." -f $tempOutputExe)
     }
 
     Write-Log "INFO" "Copiando EXE final sem apagar dados do cofre em dist..."
     Copy-Item -LiteralPath $tempOutputExe -Destination $outputExe -Force -ErrorAction Stop
 
-    Write-Log "INFO" "Removendo pasta temporaria de publish..."
+    Write-Log "INFO" "Removendo pasta temporária de publish..."
     Remove-Item -LiteralPath $tempPublishDir -Recurse -Force -ErrorAction Stop
 
     if (Test-Path -LiteralPath $outputExe) {
@@ -124,7 +124,7 @@ try {
         Write-Host $outputExe
     }
     else {
-        Write-Log "AVISO" "O build terminou, mas o EXE nao foi localizado no caminho esperado."
+        Write-Log "AVISO" "O build terminou, mas o EXE não foi localizado no caminho esperado."
         Write-Host $outputExe
     }
 

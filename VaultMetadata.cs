@@ -4,7 +4,8 @@ namespace TremauxLock
 {
     internal sealed class VaultMetadata
     {
-        public const string CurrentVersion = "3.1";
+        public const string CurrentVersion = "3.2";
+        public const string PreviousVersion = "3.1";
         public const string LegacyPasswordNormalizationVersion = "3.0";
 
         public string Version { get; set; } = CurrentVersion;

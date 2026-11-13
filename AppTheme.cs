@@ -67,7 +67,7 @@ namespace TremauxLock
         public static readonly Color Warning = HackerYellow;
         public static readonly Color Danger = HackerRed;
 
-        // Legacy aliases used by AccentButton, VaultCard, InfoRow, MainForm
+        // Aliases legados usados por VaultCard e MainForm
         public static readonly Color Border = BorderPrimary;
         public static readonly Color BorderMid = BorderSecondary;
         public static readonly Color TextSoft = TextSecondary;

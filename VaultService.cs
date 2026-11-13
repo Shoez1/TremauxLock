@@ -89,14 +89,240 @@ namespace TremauxLock
 
         public string MetadataPath { get; }
 
+        public string? RecoveryNotice { get; private set; }
+
         public void EnsureWorkspace()
         {
+            RecoverInterruptedOperations();
+
             if (!Directory.Exists(WorkingFolderPath) && !Directory.Exists(LockedFolderPath))
             {
                 Directory.CreateDirectory(WorkingFolderPath);
             }
 
             TryHardenKnownVaultPaths();
+        }
+
+        private void RecoverInterruptedOperations()
+        {
+            RecoveryNotice = null;
+
+            bool hasPrivate = Directory.Exists(WorkingFolderPath);
+            bool hasLocked = Directory.Exists(LockedFolderPath);
+            bool hasMetadata = File.Exists(MetadataPath);
+            bool metadataIsValid = hasMetadata && CanReadMetadata();
+            string pendingWorking = WorkingFolderPath + ".pending";
+            string pendingLocked = LockedFolderPath + ".pending";
+            string pendingMetadata = MetadataPath + ".pending";
+            string[] plaintextBackups = FindBackupDirectories("private.plain.backup");
+            string[] encryptedBackups = FindBackupDirectories("private.locked.encrypted.backup");
+            var notices = new List<string>();
+
+            if (hasPrivate)
+            {
+                if (Directory.Exists(pendingWorking))
+                {
+                    TryWipePlaintextDirectory(pendingWorking);
+                    notices.Add("Uma pasta temporária em claro de uma operação interrompida foi removida.");
+                }
+
+                TryCleanupDirectory(pendingLocked);
+                TryCleanupFile(pendingMetadata);
+
+                if (hasLocked && metadataIsValid)
+                {
+                    foreach (string backup in plaintextBackups)
+                    {
+                        TryWipePlaintextDirectory(backup);
+                        notices.Add("Resíduos em claro de um bloqueio anterior foram removidos.");
+                    }
+
+                    foreach (string backup in encryptedBackups)
+                    {
+                        TryCleanupDirectory(backup);
+                    }
+                }
+                else if (plaintextBackups.Length > 0)
+                {
+                    notices.Add("Há uma cópia em claro de uma operação anterior. Verifique as pastas private.plain.backup antes de continuar.");
+                }
+            }
+            else if (hasLocked && metadataIsValid)
+            {
+                if (Directory.Exists(pendingWorking))
+                {
+                    TryWipePlaintextDirectory(pendingWorking);
+                    notices.Add("Uma pasta temporária em claro de um desbloqueio interrompido foi removida.");
+                }
+
+                TryCleanupDirectory(pendingLocked);
+                TryCleanupFile(pendingMetadata);
+
+                foreach (string backup in plaintextBackups)
+                {
+                    TryWipePlaintextDirectory(backup);
+                    notices.Add("Resíduos em claro de um bloqueio anterior foram removidos.");
+                }
+
+                foreach (string backup in encryptedBackups)
+                {
+                    TryCleanupDirectory(backup);
+                }
+            }
+            else if (hasLocked && !hasMetadata)
+            {
+                if (plaintextBackups.Length > 0)
+                {
+                    if (TryRestorePlaintextBackup(plaintextBackups[0], notices))
+                    {
+                        TryCleanupDirectory(LockedFolderPath);
+                        TryCleanupDirectory(pendingLocked);
+                        TryCleanupFile(pendingMetadata);
+
+                        foreach (string duplicate in plaintextBackups.Skip(1))
+                        {
+                            TryWipePlaintextDirectory(duplicate);
+                        }
+
+                        notices.Add("Bloqueio interrompido: os arquivos em claro foram restaurados.");
+                    }
+                }
+                else
+                {
+                    notices.Add("O cofre bloqueado não possui metadados válidos. Verifique a pasta private.locked.");
+                }
+            }
+            else if (!hasLocked && metadataIsValid)
+            {
+                if (Directory.Exists(pendingWorking) && encryptedBackups.Length > 0)
+                {
+                    try
+                    {
+                        Directory.Move(pendingWorking, WorkingFolderPath);
+                        TryCleanupFile(MetadataPath);
+
+                        foreach (string backup in encryptedBackups)
+                        {
+                            TryCleanupDirectory(backup);
+                        }
+
+                        TryCleanupDirectory(pendingLocked);
+                        TryCleanupFile(pendingMetadata);
+                        notices.Add("Desbloqueio interrompido: os arquivos em claro foram restaurados.");
+                    }
+                    catch (Exception ex)
+                    {
+                        notices.Add($"Não foi possível concluir a recuperação automática: {ex.Message}");
+                    }
+                }
+                else if (Directory.Exists(pendingWorking))
+                {
+                    TryWipePlaintextDirectory(pendingWorking);
+                    notices.Add("Uma pasta temporária em claro incompleta foi removida.");
+                }
+                else
+                {
+                    notices.Add("Há metadados sem a pasta private.locked. Verifique a pasta da aplicação.");
+                }
+            }
+            else if (!hasLocked && !hasMetadata)
+            {
+                if (plaintextBackups.Length > 0)
+                {
+                    if (TryRestorePlaintextBackup(plaintextBackups[0], notices))
+                    {
+                        foreach (string duplicate in plaintextBackups.Skip(1))
+                        {
+                            TryWipePlaintextDirectory(duplicate);
+                        }
+
+                        notices.Add("Bloqueio interrompido: os arquivos em claro foram restaurados.");
+                    }
+                }
+                else if (Directory.Exists(pendingWorking))
+                {
+                    try
+                    {
+                        Directory.Move(pendingWorking, WorkingFolderPath);
+                        notices.Add("Uma pasta temporária de desbloqueio foi promovida à pasta private.");
+                    }
+                    catch (Exception ex)
+                    {
+                        notices.Add($"Não foi possível recuperar a pasta temporária: {ex.Message}");
+                    }
+                }
+
+                TryCleanupDirectory(pendingLocked);
+                TryCleanupFile(pendingMetadata);
+            }
+            else
+            {
+                notices.Add("As pastas do cofre estão em conflito. Verifique private, private.locked e private.vault.json.");
+            }
+
+            if (notices.Count > 0)
+            {
+                RecoveryNotice = string.Join(Environment.NewLine, notices.Distinct());
+            }
+        }
+
+        private bool CanReadMetadata()
+        {
+            try
+            {
+                LoadMetadata();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private string[] FindBackupDirectories(string prefix)
+        {
+            try
+            {
+                return Directory.EnumerateDirectories(ApplicationDirectory, prefix + "*", SearchOption.TopDirectoryOnly)
+                    .OrderByDescending(path => Directory.GetLastWriteTimeUtc(path))
+                    .ThenBy(path => path, StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+            }
+            catch
+            {
+                return Array.Empty<string>();
+            }
+        }
+
+        private bool TryRestorePlaintextBackup(string backupPath, List<string> notices)
+        {
+            try
+            {
+                if (Directory.Exists(WorkingFolderPath))
+                {
+                    notices.Add("A pasta private já existe; a cópia em claro foi preservada para revisão manual.");
+                    return false;
+                }
+
+                Directory.Move(backupPath, WorkingFolderPath);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                notices.Add($"Não foi possível restaurar a cópia em claro '{backupPath}': {ex.Message}");
+                return false;
+            }
+        }
+
+        private static void TryWipePlaintextDirectory(string path)
+        {
+            try
+            {
+                DeletePlaintextDirectory(path);
+            }
+            catch
+            {
+            }
         }
 
         public VaultOverview GetOverview()
@@ -112,20 +338,27 @@ namespace TremauxLock
                 hasUnlockedFolder = true;
             }
 
-            if (hasUnlockedFolder && !hasLockedFolder && !hasMetadata)
+            if (hasUnlockedFolder && !hasLockedFolder)
             {
                 string[] files = EnumerateVaultFiles(WorkingFolderPath);
-                long totalBytes = files.Sum(file => new FileInfo(file).Length);
+                long totalBytes = GetTotalBytesSafe(files);
 
-                return new VaultOverview
+                // Metadados remanescentes com uma pasta private preenchida indicam que a
+                // limpeza final de um desbloqueio foi interrompida. O conteúdo em claro
+                // já está completo, então o cofre pode ser tratado como aberto.
+                bool staleMetadataWithFiles = hasMetadata && files.Length > 0;
+                if (!hasMetadata || staleMetadataWithFiles)
                 {
-                    State = files.Length == 0 ? VaultState.Empty : VaultState.Unlocked,
-                    FileCount = files.Length,
-                    TotalBytes = totalBytes,
-                    WorkingFolderPath = WorkingFolderPath,
-                    LockedFolderPath = LockedFolderPath,
-                    MetadataPath = MetadataPath
-                };
+                    return new VaultOverview
+                    {
+                        State = files.Length == 0 ? VaultState.Empty : VaultState.Unlocked,
+                        FileCount = files.Length,
+                        TotalBytes = totalBytes,
+                        WorkingFolderPath = WorkingFolderPath,
+                        LockedFolderPath = LockedFolderPath,
+                        MetadataPath = MetadataPath
+                    };
+                }
             }
 
             if (!hasUnlockedFolder && hasLockedFolder && hasMetadata)
@@ -195,26 +428,26 @@ namespace TremauxLock
 
         private LockResult LockVault(string password, IProgress<VaultProgress>? progress, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrWhiteSpace(password) || password.Length < VaultCrypto.MinimumPasswordLength)
+            if (string.IsNullOrWhiteSpace(password))
             {
-                throw new InvalidOperationException($"Use uma senha com pelo menos {VaultCrypto.MinimumPasswordLength} caracteres.");
+                throw new InvalidOperationException("Informe uma senha.");
             }
 
             VaultOverview overview = GetOverview();
             if (overview.State == VaultState.Locked)
             {
-                throw new InvalidOperationException("O cofre ja esta bloqueado.");
+                throw new InvalidOperationException("O cofre já está bloqueado.");
             }
 
             if (overview.State == VaultState.Inconsistent)
             {
-                throw new InvalidOperationException("O cofre esta em um estado inconsistente. Verifique as pastas private/private.locked antes de continuar.");
+                throw new InvalidOperationException("O cofre está em um estado inconsistente. Verifique as pastas private/private.locked antes de continuar.");
             }
 
             string[] files = EnumerateVaultFiles(WorkingFolderPath);
             if (files.Length == 0)
             {
-                throw new InvalidOperationException("A pasta private esta vazia. Adicione arquivos antes de bloquear o cofre.");
+                throw new InvalidOperationException("A pasta private está vazia. Adicione arquivos antes de bloquear o cofre.");
             }
 
             string tempLockedDirectory = LockedFolderPath + ".pending";
@@ -293,7 +526,7 @@ namespace TremauxLock
                 movedPlaintextToBackup = true;
                 Directory.Move(tempLockedDirectory, LockedFolderPath);
                 movedLockedIntoPlace = true;
-                File.Move(tempMetadataPath, MetadataPath);
+                File.Move(tempMetadataPath, MetadataPath, overwrite: true);
                 movedMetadataIntoPlace = true;
                 VaultSecurity.TryHardenPath(LockedFolderPath);
                 VaultSecurity.TryHardenPath(MetadataPath);
@@ -305,7 +538,7 @@ namespace TremauxLock
                 }
                 catch (Exception ex)
                 {
-                    backupWarning = $"Os arquivos foram bloqueados, mas a copia temporaria em '{plaintextBackupDirectory}' nao foi removida automaticamente. Ela ainda contem dados em claro: {ex.Message}";
+                    backupWarning = $"Os arquivos foram bloqueados, mas a cópia temporária em '{plaintextBackupDirectory}' não foi removida automaticamente. Ela ainda contém dados em claro: {ex.Message}";
                 }
 
                 progress?.Report(new VaultProgress
@@ -365,12 +598,12 @@ namespace TremauxLock
             VaultOverview overview = GetOverview();
             if (overview.State != VaultState.Locked)
             {
-                throw new InvalidOperationException("Nao existe cofre bloqueado para restaurar.");
+                throw new InvalidOperationException("Não existe cofre bloqueado para restaurar.");
             }
 
             if (Directory.Exists(WorkingFolderPath))
             {
-                throw new InvalidOperationException("A pasta private ja existe. Mova ou remova a pasta atual antes de desbloquear.");
+                throw new InvalidOperationException("A pasta private já existe. Mova ou remova a pasta atual antes de desbloquear.");
             }
 
             VaultMetadata metadata = LoadMetadata();
@@ -390,7 +623,7 @@ namespace TremauxLock
             if (unexpectedFiles.Length > 0)
             {
                 CryptographicOperations.ZeroMemory(masterKey);
-                throw new VaultIntegrityException("O cofre bloqueado contem arquivos inesperados. Remova itens nao criptografados de private.locked antes de continuar.");
+                throw new VaultIntegrityException("O cofre bloqueado contém arquivos inesperados. Remova itens não criptografados de private.locked antes de continuar.");
             }
 
             string[] encryptedFiles = lockedFiles
@@ -400,13 +633,13 @@ namespace TremauxLock
             if (encryptedFiles.Length == 0)
             {
                 CryptographicOperations.ZeroMemory(masterKey);
-                throw new VaultIntegrityException("O cofre bloqueado nao contem arquivos criptografados.");
+                throw new VaultIntegrityException("O cofre bloqueado não contém arquivos criptografados.");
             }
 
             if (encryptedFiles.Length != metadata.FileCount)
             {
                 CryptographicOperations.ZeroMemory(masterKey);
-                throw new VaultIntegrityException("A quantidade de arquivos criptografados nao bate com os metadados do cofre.");
+                throw new VaultIntegrityException("A quantidade de arquivos criptografados não bate com os metadados do cofre.");
             }
 
             string tempUnlockedDirectory = WorkingFolderPath + ".pending";
@@ -453,13 +686,23 @@ namespace TremauxLock
 
                 if (restoredFileCount != metadata.FileCount || restoredBytes != metadata.TotalBytes)
                 {
-                    throw new VaultIntegrityException("O cofre restaurado nao bate com os metadados. Os dados criptografados podem estar incompletos.");
+                    throw new VaultIntegrityException("O cofre restaurado não bate com os metadados. Os dados criptografados podem estar incompletos.");
                 }
 
                 Directory.Move(LockedFolderPath, lockedBackupDirectory);
                 Directory.Move(tempUnlockedDirectory, WorkingFolderPath);
                 VaultSecurity.TryHardenPath(WorkingFolderPath);
-                File.Delete(MetadataPath);
+
+                try
+                {
+                    File.Delete(MetadataPath);
+                }
+                catch (Exception ex)
+                {
+                    backupWarning = CombineWarnings(
+                        backupWarning,
+                        $"O cofre foi restaurado, mas o arquivo de metadados em '{MetadataPath}' não foi removido automaticamente: {ex.Message}. Ele será substituído no próximo bloqueio.");
+                }
 
                 try
                 {
@@ -467,7 +710,9 @@ namespace TremauxLock
                 }
                 catch (Exception ex)
                 {
-                    backupWarning = $"O cofre foi restaurado, mas os dados criptografados temporarios em '{lockedBackupDirectory}' nao foram removidos automaticamente: {ex.Message}";
+                    backupWarning = CombineWarnings(
+                        backupWarning,
+                        $"O cofre foi restaurado, mas os dados criptografados temporários em '{lockedBackupDirectory}' não foram removidos automaticamente: {ex.Message}");
                 }
 
                 progress?.Report(new VaultProgress
@@ -513,16 +758,16 @@ namespace TremauxLock
             }
             catch (JsonException ex)
             {
-                throw new VaultIntegrityException("Nao foi possivel ler os metadados do cofre.", ex);
+                throw new VaultIntegrityException("Não foi possível ler os metadados do cofre.", ex);
             }
             catch (NotSupportedException ex)
             {
-                throw new VaultIntegrityException("Nao foi possivel ler os metadados do cofre.", ex);
+                throw new VaultIntegrityException("Não foi possível ler os metadados do cofre.", ex);
             }
 
             if (metadata == null)
             {
-                throw new VaultIntegrityException("Nao foi possivel ler os metadados do cofre.");
+                throw new VaultIntegrityException("Não foi possível ler os metadados do cofre.");
             }
 
             ValidateMetadata(metadata);
@@ -565,7 +810,7 @@ namespace TremauxLock
 
         private static byte[] UnprotectWithRecoveryKey(VaultMetadata metadata, string recoveryKey, out byte[] recoverySalt)
         {
-            recoverySalt = DecodeBase64Field(metadata.RecoverySaltBase64, "salt da chave de recuperacao", VaultCrypto.SaltSize);
+            recoverySalt = DecodeBase64Field(metadata.RecoverySaltBase64, "salt da chave de recuperação", VaultCrypto.SaltSize);
             return VaultCrypto.UnprotectMasterKey(
                 metadata.WrappedMasterKeyByRecovery,
                 VaultCrypto.NormalizeRecoveryKey(recoveryKey),
@@ -576,9 +821,10 @@ namespace TremauxLock
         private static void ValidateMetadata(VaultMetadata metadata)
         {
             if (metadata.Version != VaultMetadata.CurrentVersion
+                && metadata.Version != VaultMetadata.PreviousVersion
                 && metadata.Version != VaultMetadata.LegacyPasswordNormalizationVersion)
             {
-                throw new VaultIntegrityException("Versao de metadados do cofre nao suportada.");
+                throw new VaultIntegrityException("Versão de metadados do cofre não suportada.");
             }
 
             if (metadata.WorkingFolderName != "private" || metadata.LockedFolderName != "private.locked")
@@ -588,24 +834,24 @@ namespace TremauxLock
 
             if (metadata.FileCount <= 0 || metadata.TotalBytes < 0)
             {
-                throw new VaultIntegrityException("Os metadados do cofre contem contagem ou tamanho invalido.");
+                throw new VaultIntegrityException("Os metadados do cofre contêm contagem ou tamanho inválido.");
             }
 
             if (!DateTimeOffset.TryParse(metadata.CreatedUtc, out _)
                 || !DateTimeOffset.TryParse(metadata.LockedUtc, out _))
             {
-                throw new VaultIntegrityException("Os metadados do cofre contem datas invalidas.");
+                throw new VaultIntegrityException("Os metadados do cofre contêm datas inválidas.");
             }
 
             ValidateKdfMetadata(metadata.PasswordIterations, metadata.PasswordSaltBase64, metadata.WrappedMasterKeyByPassword, "senha");
-            ValidateKdfMetadata(metadata.RecoveryIterations, metadata.RecoverySaltBase64, metadata.WrappedMasterKeyByRecovery, "chave de recuperacao");
+            ValidateKdfMetadata(metadata.RecoveryIterations, metadata.RecoverySaltBase64, metadata.WrappedMasterKeyByRecovery, "chave de recuperação");
         }
 
         private static void ValidateKdfMetadata(int iterations, string saltBase64, string wrappedMasterKey, string label)
         {
             if (iterations < VaultCrypto.MinimumIterations || iterations > VaultCrypto.MaximumIterations)
             {
-                throw new VaultIntegrityException($"Os metadados do cofre contem iteracoes invalidas para {label}.");
+                throw new VaultIntegrityException($"Os metadados do cofre contêm iterações inválidas para {label}.");
             }
 
             byte[] salt = DecodeBase64Field(saltBase64, $"salt da {label}", VaultCrypto.SaltSize);
@@ -618,7 +864,7 @@ namespace TremauxLock
         {
             if (string.IsNullOrWhiteSpace(value))
             {
-                throw new VaultIntegrityException($"Os metadados do cofre nao contem {fieldName}.");
+                throw new VaultIntegrityException($"Os metadados do cofre não contêm {fieldName}.");
             }
 
             byte[] decoded;
@@ -628,13 +874,13 @@ namespace TremauxLock
             }
             catch (FormatException ex)
             {
-                throw new VaultIntegrityException($"Os metadados do cofre contem {fieldName} invalido.", ex);
+                throw new VaultIntegrityException($"Os metadados do cofre contêm {fieldName} inválido.", ex);
             }
 
             if (decoded.Length != expectedLength)
             {
                 CryptographicOperations.ZeroMemory(decoded);
-                throw new VaultIntegrityException($"Os metadados do cofre contem {fieldName} com tamanho invalido.");
+                throw new VaultIntegrityException($"Os metadados do cofre contêm {fieldName} com tamanho inválido.");
             }
 
             return decoded;
@@ -667,7 +913,7 @@ namespace TremauxLock
                 }
             }
 
-            throw new InvalidOperationException("Nao foi possivel criar um caminho de backup temporario unico.");
+            throw new InvalidOperationException("Não foi possível criar um caminho de backup temporário único.");
         }
 
         private static void CleanupDirectory(string path)
@@ -706,6 +952,13 @@ namespace TremauxLock
             catch
             {
             }
+        }
+
+        private static string CombineWarnings(string? current, string next)
+        {
+            return string.IsNullOrWhiteSpace(current)
+                ? next
+                : current + Environment.NewLine + next;
         }
 
         private static void DeletePlaintextDirectory(string path)
@@ -805,6 +1058,27 @@ namespace TremauxLock
                 .ToArray();
         }
 
+        private static long GetTotalBytesSafe(IEnumerable<string> files)
+        {
+            long totalBytes = 0;
+
+            foreach (string file in files)
+            {
+                try
+                {
+                    totalBytes += new FileInfo(file).Length;
+                }
+                catch (IOException)
+                {
+                }
+                catch (UnauthorizedAccessException)
+                {
+                }
+            }
+
+            return totalBytes;
+        }
+
         private static string[] EnumerateVaultDirectories(string rootPath)
         {
             var options = new EnumerationOptions
@@ -826,7 +1100,7 @@ namespace TremauxLock
 
             if (!string.Equals(expectedPath, actualPath, StringComparison.OrdinalIgnoreCase))
             {
-                throw new VaultIntegrityException("A pasta private contem um caminho de arquivo inseguro.");
+                throw new VaultIntegrityException("A pasta private contém um caminho de arquivo inseguro.");
             }
         }
 
@@ -839,7 +1113,7 @@ namespace TremauxLock
 
             if (!fullDestination.StartsWith(rootWithSeparator, StringComparison.OrdinalIgnoreCase))
             {
-                throw new VaultIntegrityException("O cofre contem um caminho de arquivo inseguro.");
+                throw new VaultIntegrityException("O cofre contém um caminho de arquivo inseguro.");
             }
 
             return fullDestination;

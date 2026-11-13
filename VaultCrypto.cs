@@ -18,10 +18,11 @@ namespace TremauxLock
         private const int ChunkHeaderSize = 1 + sizeof(int) + NonceSize + TagSize;
         private const int MaxSupportedChunkSize = 64 * 1024 * 1024;
 
-        public const int DefaultIterations = 210000;
+        // OWASP recomenda >= 600.000 iterações para PBKDF2-HMAC-SHA256.
+        // O minimo permanece em 210.000 para abrir cofres criados por versoes antigas.
+        public const int DefaultIterations = 600000;
         public const int MinimumIterations = 210000;
         public const int MaximumIterations = 2000000;
-        public const int MinimumPasswordLength = 10;
         public const int SaltSize = 16;
         public const int WrappedMasterKeyPayloadSize = NonceSize + TagSize + MasterKeySize;
         public const int StreamChunkSize = 4 * 1024 * 1024;
@@ -74,7 +75,7 @@ namespace TremauxLock
                     FileOptions.SequentialScan);
 
                 Span<byte> magic = stackalloc byte[FileMagic.Length];
-                ReadExactlyOrThrow(input, magic, "O arquivo criptografado esta truncado ou invalido.");
+                ReadExactlyOrThrow(input, magic, "O arquivo criptografado está truncado ou inválido.");
                 input.Position = 0;
 
                 if (magic.SequenceEqual(StreamFileMagic))
@@ -198,17 +199,17 @@ namespace TremauxLock
             Span<byte> fileHeader = stackalloc byte[StreamFileMagic.Length];
             Span<byte> chunkSizeBytes = stackalloc byte[sizeof(int)];
 
-            ReadExactlyOrThrow(input, fileHeader, "O arquivo criptografado esta truncado ou invalido.");
+            ReadExactlyOrThrow(input, fileHeader, "O arquivo criptografado está truncado ou inválido.");
             if (!fileHeader.SequenceEqual(StreamFileMagic))
             {
                 throw new VaultIntegrityException("Formato de arquivo criptografado desconhecido.");
             }
 
-            ReadExactlyOrThrow(input, chunkSizeBytes, "O arquivo criptografado esta truncado ou invalido.");
+            ReadExactlyOrThrow(input, chunkSizeBytes, "O arquivo criptografado está truncado ou inválido.");
             int chunkSize = BinaryPrimitives.ReadInt32LittleEndian(chunkSizeBytes);
             if (chunkSize <= 0 || chunkSize > MaxSupportedChunkSize)
             {
-                throw new VaultIntegrityException("O arquivo criptografado usa um tamanho de bloco invalido.");
+                throw new VaultIntegrityException("O arquivo criptografado usa um tamanho de bloco inválido.");
             }
 
             byte[] cipherBuffer = new byte[chunkSize];
@@ -235,25 +236,25 @@ namespace TremauxLock
                     byte flags = (byte)flagValue;
                     if ((flags & ~1) != 0)
                     {
-                        throw new VaultIntegrityException("O arquivo criptografado contem flags invalidas.");
+                        throw new VaultIntegrityException("O arquivo criptografado contém flags inválidas.");
                     }
 
-                    ReadExactlyOrThrow(input, lengthBytes, "O arquivo criptografado esta truncado ou invalido.");
+                    ReadExactlyOrThrow(input, lengthBytes, "O arquivo criptografado está truncado ou inválido.");
                     int plainLength = BinaryPrimitives.ReadInt32LittleEndian(lengthBytes);
                     if (plainLength < 0 || plainLength > chunkSize)
                     {
-                        throw new VaultIntegrityException("O arquivo criptografado contem bloco com tamanho invalido.");
+                        throw new VaultIntegrityException("O arquivo criptografado contém bloco com tamanho inválido.");
                     }
 
                     bool isFinalChunk = (flags & 1) == 1;
                     if (plainLength == 0 && !isFinalChunk)
                     {
-                        throw new VaultIntegrityException("O arquivo criptografado contem bloco vazio antes do bloco final.");
+                        throw new VaultIntegrityException("O arquivo criptografado contém bloco vazio antes do bloco final.");
                     }
 
-                    ReadExactlyOrThrow(input, nonce, "O arquivo criptografado esta truncado ou invalido.");
-                    ReadExactlyOrThrow(input, tag, "O arquivo criptografado esta truncado ou invalido.");
-                    ReadExactlyOrThrow(input, cipherBuffer.AsSpan(0, plainLength), "O arquivo criptografado esta truncado ou invalido.");
+                    ReadExactlyOrThrow(input, nonce, "O arquivo criptografado está truncado ou inválido.");
+                    ReadExactlyOrThrow(input, tag, "O arquivo criptografado está truncado ou inválido.");
+                    ReadExactlyOrThrow(input, cipherBuffer.AsSpan(0, plainLength), "O arquivo criptografado está truncado ou inválido.");
 
                     byte[] aad = CreateChunkAad(normalizedPath, chunkIndex, flags, plainLength);
                     try
@@ -285,7 +286,7 @@ namespace TremauxLock
                     sawFinalChunk = isFinalChunk;
                     if (sawFinalChunk && input.Position != input.Length)
                     {
-                        throw new VaultIntegrityException("O arquivo criptografado contem dados extras apos o bloco final.");
+                        throw new VaultIntegrityException("O arquivo criptografado contém dados extras após o bloco final.");
                     }
 
                     chunkIndex++;
@@ -334,7 +335,7 @@ namespace TremauxLock
         {
             if (encryptedBytes.Length < FileMagic.Length + NonceSize + TagSize)
             {
-                throw new VaultIntegrityException("O arquivo criptografado esta truncado ou invalido.");
+                throw new VaultIntegrityException("O arquivo criptografado está truncado ou inválido.");
             }
 
             for (int index = 0; index < FileMagic.Length; index++)
@@ -440,7 +441,7 @@ namespace TremauxLock
             if (payload.Length != WrappedMasterKeyPayloadSize)
             {
                 CryptographicOperations.ZeroMemory(wrappingKey);
-                throw new VaultAuthenticationException("A credencial informada esta incorreta ou os metadados do cofre foram alterados.");
+                throw new VaultAuthenticationException("A credencial informada está incorreta ou os metadados do cofre foram alterados.");
             }
 
             byte[] nonce = new byte[NonceSize];
@@ -461,7 +462,7 @@ namespace TremauxLock
             catch (CryptographicException ex)
             {
                 CryptographicOperations.ZeroMemory(masterKey);
-                throw new VaultAuthenticationException("A credencial informada esta incorreta ou os metadados do cofre foram alterados.", ex);
+                throw new VaultAuthenticationException("A credencial informada está incorreta ou os metadados do cofre foram alterados.", ex);
             }
             finally
             {
@@ -581,6 +582,22 @@ namespace TremauxLock
             return relativePath.Replace('\\', '/');
         }
 
+        public static long? TryGetFileSize(string path)
+        {
+            try
+            {
+                return new FileInfo(path).Length;
+            }
+            catch (IOException)
+            {
+                return null;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return null;
+            }
+        }
+
         public static string FormatSize(long bytes)
         {
             string[] suffixes = { "B", "KB", "MB", "GB", "TB" };
@@ -602,17 +619,17 @@ namespace TremauxLock
         {
             if (secret == null)
             {
-                throw new VaultAuthenticationException("A credencial informada esta incorreta ou os metadados do cofre foram alterados.");
+                throw new VaultAuthenticationException("A credencial informada está incorreta ou os metadados do cofre foram alterados.");
             }
 
             if (salt.Length != SaltSize)
             {
-                throw new VaultIntegrityException("Os metadados do cofre contem salt invalido.");
+                throw new VaultIntegrityException("Os metadados do cofre contêm salt inválido.");
             }
 
             if (iterations < MinimumIterations || iterations > MaximumIterations)
             {
-                throw new VaultIntegrityException("Os metadados do cofre contem parametro de derivacao invalido.");
+                throw new VaultIntegrityException("Os metadados do cofre contêm parâmetro de derivação inválido.");
             }
 
             return Rfc2898DeriveBytes.Pbkdf2(
@@ -631,14 +648,14 @@ namespace TremauxLock
                 if (payload.Length != WrappedMasterKeyPayloadSize)
                 {
                     CryptographicOperations.ZeroMemory(payload);
-                    throw new VaultAuthenticationException("A credencial informada esta incorreta ou os metadados do cofre foram alterados.");
+                    throw new VaultAuthenticationException("A credencial informada está incorreta ou os metadados do cofre foram alterados.");
                 }
 
                 return payload;
             }
             catch (FormatException ex)
             {
-                throw new VaultAuthenticationException("A credencial informada esta incorreta ou os metadados do cofre foram alterados.", ex);
+                throw new VaultAuthenticationException("A credencial informada está incorreta ou os metadados do cofre foram alterados.", ex);
             }
         }
 

@@ -21,6 +21,8 @@ namespace TremauxLock
         private readonly InputField fieldPassword;
         private readonly InputField fieldConfirm;
         private readonly TextBox txtRecovery;
+        private readonly Label lblStrength;
+        private readonly CheckBox chkShowPassword;
         private readonly HackerButton btnOk;
         private readonly HackerButton btnCancel;
 
@@ -40,13 +42,13 @@ namespace TremauxLock
             Font = AppTheme.CreateBodyFont(9.5f);
             AutoScaleMode = AutoScaleMode.Font;
 
-            int h = mode switch
+            int height = mode switch
             {
-                CredentialDialogMode.CreatePassword => 400,
+                CredentialDialogMode.CreatePassword => 410,
                 CredentialDialogMode.UnlockWithRecoveryKey => 380,
-                _ => 300
+                _ => 320
             };
-            ClientSize = new Size(540, h);
+            ClientSize = new Size(540, height);
 
             lblTitle = new Label
             {
@@ -61,7 +63,7 @@ namespace TremauxLock
             {
                 CredentialDialogMode.CreatePassword => "Definir senha do cofre",
                 CredentialDialogMode.UnlockWithPassword => "Desbloquear com senha",
-                _ => "Usar chave de recuperacao"
+                _ => "Usar chave de recuperação"
             };
 
             fieldPassword = new InputField
@@ -72,10 +74,11 @@ namespace TremauxLock
                     ? "Nova senha"
                     : "Senha",
                 PlaceholderText = mode == CredentialDialogMode.CreatePassword
-                    ? $"Minimo {VaultCrypto.MinimumPasswordLength} caracteres"
+                    ? "Digite a senha"
                     : "Senha do cofre",
                 UsePassword = mode != CredentialDialogMode.UnlockWithRecoveryKey,
-                MaxLength = MaximumPasswordLength
+                MaxLength = MaximumPasswordLength,
+                AccessibleName = "Senha do cofre"
             };
             fieldPassword.Visible = mode != CredentialDialogMode.UnlockWithRecoveryKey;
 
@@ -86,7 +89,8 @@ namespace TremauxLock
                 Caption = "Confirmar senha",
                 PlaceholderText = "Repita a senha",
                 UsePassword = true,
-                MaxLength = MaximumPasswordLength
+                MaxLength = MaximumPasswordLength,
+                AccessibleName = "Confirmação da senha"
             };
             fieldConfirm.Visible = mode == CredentialDialogMode.CreatePassword;
 
@@ -102,10 +106,42 @@ namespace TremauxLock
                 BackColor = AppTheme.InputFill,
                 ForeColor = AppTheme.TextPrimary,
                 Font = AppTheme.CreateCodeFont(10f),
-                PlaceholderText = "Cole ou digite a chave (hex com hifens)",
-                MaxLength = MaximumRecoveryKeyInputLength
+                PlaceholderText = "Cole ou digite a chave (hex com hífens)",
+                MaxLength = MaximumRecoveryKeyInputLength,
+                AccessibleName = "Chave de recuperação"
             };
             txtRecovery.Visible = mode == CredentialDialogMode.UnlockWithRecoveryKey;
+
+            lblStrength = new Label
+            {
+                AutoSize = false,
+                Bounds = new Rectangle(24, 240, ClientSize.Width - 48, 22),
+                ForeColor = AppTheme.TextSecondary,
+                BackColor = BackColor,
+                Font = AppTheme.CreateBodyFont(8.75f, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleLeft,
+                Visible = false
+            };
+
+            chkShowPassword = new CheckBox
+            {
+                Bounds = mode == CredentialDialogMode.CreatePassword
+                    ? new Rectangle(24, 268, 220, 24)
+                    : new Rectangle(24, 164, 220, 24),
+                Text = "Mostrar senhas",
+                ForeColor = AppTheme.TextSecondary,
+                BackColor = BackColor,
+                FlatStyle = FlatStyle.System,
+                Visible = mode != CredentialDialogMode.UnlockWithRecoveryKey,
+                AccessibleName = "Mostrar senhas"
+            };
+            chkShowPassword.CheckedChanged += (_, _) =>
+            {
+                fieldPassword.UsePassword = !chkShowPassword.Checked;
+                fieldConfirm.UsePassword = !chkShowPassword.Checked;
+            };
+
+            fieldPassword.TextValueChanged += (_, _) => UpdateStrengthLabel();
 
             btnOk = new HackerButton
             {
@@ -113,7 +149,8 @@ namespace TremauxLock
                 ButtonStyle = HackerButtonStyle.Primary,
                 Location = new Point(ClientSize.Width - 24 - 160 - 12 - 160, ClientSize.Height - 24 - 44),
                 Width = 160,
-                Height = 44
+                Height = 44,
+                AccessibleName = "Confirmar"
             };
             btnOk.Click += BtnOk_Click;
 
@@ -123,7 +160,8 @@ namespace TremauxLock
                 ButtonStyle = HackerButtonStyle.Ghost,
                 Location = new Point(ClientSize.Width - 24 - 160, ClientSize.Height - 24 - 44),
                 Width = 160,
-                Height = 44
+                Height = 44,
+                AccessibleName = "Cancelar"
             };
             btnCancel.Click += (_, _) =>
             {
@@ -138,6 +176,8 @@ namespace TremauxLock
             Controls.Add(fieldPassword);
             Controls.Add(fieldConfirm);
             Controls.Add(txtRecovery);
+            Controls.Add(lblStrength);
+            Controls.Add(chkShowPassword);
             Controls.Add(btnOk);
             Controls.Add(btnCancel);
 
@@ -154,15 +194,42 @@ namespace TremauxLock
             };
         }
 
+        private void UpdateStrengthLabel()
+        {
+            if (mode != CredentialDialogMode.CreatePassword)
+            {
+                return;
+            }
+
+            string password = fieldPassword.TextValue;
+            if (string.IsNullOrEmpty(password))
+            {
+                lblStrength.Visible = false;
+                lblStrength.Text = string.Empty;
+                return;
+            }
+
+            PasswordStrengthLevel level = PasswordStrength.Evaluate(password);
+            lblStrength.Text = $"Força da senha: {PasswordStrength.GetLabel(level)}";
+            lblStrength.ForeColor = level switch
+            {
+                PasswordStrengthLevel.VeryWeak => AppTheme.HackerRed,
+                PasswordStrengthLevel.Weak => AppTheme.HackerYellow,
+                PasswordStrengthLevel.Medium => AppTheme.HackerBlue,
+                _ => AppTheme.HackerGreen
+            };
+            lblStrength.Visible = true;
+        }
+
         private void BtnOk_Click(object? sender, EventArgs e)
         {
             switch (mode)
             {
                 case CredentialDialogMode.CreatePassword:
-                    if (fieldPassword.TextValue.Length < VaultCrypto.MinimumPasswordLength)
+                    if (string.IsNullOrWhiteSpace(fieldPassword.TextValue))
                     {
                         MessageBox.Show(
-                            $"A senha precisa ter pelo menos {VaultCrypto.MinimumPasswordLength} caracteres.",
+                            "Informe uma senha.",
                             Text,
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Warning);
@@ -171,7 +238,7 @@ namespace TremauxLock
 
                     if (fieldPassword.TextValue != fieldConfirm.TextValue)
                     {
-                        MessageBox.Show("As senhas nao coincidem.", Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        MessageBox.Show("As senhas não coincidem.", Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
                     }
 
@@ -192,14 +259,14 @@ namespace TremauxLock
                     string key = txtRecovery.Text.Trim();
                     if (string.IsNullOrWhiteSpace(key))
                     {
-                        MessageBox.Show("Informe a chave de recuperacao.", Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        MessageBox.Show("Informe a chave de recuperação.", Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
                     }
 
                     if (!VaultCrypto.IsValidRecoveryKeyFormat(key))
                     {
                         MessageBox.Show(
-                            "Formato de chave invalido. A chave deve ter 32 caracteres hexadecimais (ex: ABCD-1234-...)",
+                            "Formato de chave inválido. A chave deve ter 32 caracteres hexadecimais (ex.: ABCD-1234-...).",
                             Text,
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Warning);
@@ -220,6 +287,8 @@ namespace TremauxLock
             fieldPassword.TextValue = string.Empty;
             fieldConfirm.TextValue = string.Empty;
             txtRecovery.Text = string.Empty;
+            lblStrength.Text = string.Empty;
+            lblStrength.Visible = false;
         }
 
         protected override void Dispose(bool disposing)

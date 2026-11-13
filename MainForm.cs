@@ -41,6 +41,7 @@ namespace TremauxLock
         private int lastProgressTotal = 1;
         private string progressText = string.Empty;
         private DateTime unlockCooldownUntilUtc = DateTime.MinValue;
+        private bool recoveryNoticeShown;
 
         public MainForm(VaultService vaultService)
         {
@@ -54,6 +55,7 @@ namespace TremauxLock
             FormBorderStyle = FormBorderStyle.Sizable;
             MaximizeBox = true;
             MinimizeBox = true;
+            KeyPreview = true;
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
                 | ControlStyles.OptimizedDoubleBuffer
@@ -124,7 +126,7 @@ namespace TremauxLock
 
             lblEyebrow = new Label
             {
-                Text = "LOCAL VAULT / WINDOWS / AES-GCM",
+                Text = "COFRE LOCAL / WINDOWS / AES-GCM",
                 AutoSize = true,
                 BackColor = AppTheme.CardFill,
                 ForeColor = AppTheme.HackerCyan,
@@ -174,7 +176,8 @@ namespace TremauxLock
                 Height = 30,
                 Width = 220,
                 ShowDot = true,
-                Text = "-"
+                Text = "-",
+                AccessibleName = "Estado do cofre"
             };
 
             lblCountMetric = CreateMetricLabel();
@@ -210,7 +213,8 @@ namespace TremauxLock
                 ForeColor = Color.FromArgb(135, 245, 204),
                 Font = AppTheme.CreateCodeFont(10f),
                 Dock = DockStyle.Fill,
-                Multiline = false
+                Multiline = false,
+                AccessibleName = "Caminho da pasta do cofre"
             };
 
             var pathShell = new SurfacePanel
@@ -270,7 +274,8 @@ namespace TremauxLock
                 Visible = false,
                 Dock = DockStyle.Fill,
                 DrawMode = DrawMode.OwnerDrawFixed,
-                ItemHeight = 28
+                ItemHeight = 28,
+                AccessibleName = "Arquivos do cofre"
             };
             lstFiles.DrawItem += LstFiles_DrawItem;
 
@@ -340,7 +345,8 @@ namespace TremauxLock
                 ButtonStyle = HackerButtonStyle.Secondary,
                 Width = 148,
                 Height = 42,
-                Margin = new Padding(0, 0, 10, 8)
+                Margin = new Padding(0, 0, 10, 8),
+                AccessibleName = "Abrir pasta do cofre"
             };
             btnFolder.Click += (_, _) => OpenRelevantFolder();
 
@@ -350,7 +356,8 @@ namespace TremauxLock
                 ButtonStyle = HackerButtonStyle.Primary,
                 Width = 184,
                 Height = 42,
-                Margin = new Padding(0, 0, 10, 8)
+                Margin = new Padding(0, 0, 10, 8),
+                AccessibleName = "Ação principal do cofre"
             };
             btnMain.Click += (_, _) => _ = HandlePrimaryActionAsync();
 
@@ -361,7 +368,8 @@ namespace TremauxLock
                 Width = 128,
                 Height = 42,
                 Visible = false,
-                Margin = new Padding(0, 0, 0, 8)
+                Margin = new Padding(0, 0, 0, 8),
+                AccessibleName = "Desbloquear com chave de recuperação"
             };
             btnRecovery.Click += (_, _) => _ = UnlockVaultAsync(true);
 
@@ -371,7 +379,7 @@ namespace TremauxLock
 
             lblFooter = new Label
             {
-                Text = "TremauxLock protege apenas a pasta private escolhida pelo usuario.",
+                Text = $"TremauxLock {Application.ProductVersion} — protege apenas a pasta private escolhida pelo usuário.",
                 BackColor = AppTheme.BackgroundPrimary,
                 ForeColor = AppTheme.TextMuted,
                 Font = AppTheme.CreateBodyFont(8.25f),
@@ -409,8 +417,17 @@ namespace TremauxLock
             {
                 SyncLayoutRootWidth();
                 RefreshOverview();
+                ShowRecoveryNoticeIfNeeded();
             };
             Shown += (_, _) => SyncLayoutRootWidth();
+            Activated += (_, _) =>
+            {
+                if (!isBusy)
+                {
+                    RefreshOverview();
+                }
+            };
+            KeyDown += MainForm_KeyDown;
         }
 
         protected override void OnPaintBackground(PaintEventArgs e)
@@ -564,7 +581,12 @@ namespace TremauxLock
                 LockResult result = await vaultService.LockVaultAsync(dialog.Secret, progress);
                 RefreshOverview();
 
-                using var recoveryDialog = new RecoveryKeyDialog(result.RecoveryKey, result.FileCount, result.TotalBytes, result.BackupWarning);
+                using var recoveryDialog = new RecoveryKeyDialog(
+                    result.RecoveryKey,
+                    result.FileCount,
+                    result.TotalBytes,
+                    result.BackupWarning,
+                    vaultService.ApplicationDirectory);
                 recoveryDialog.ShowDialog(this);
             }
             catch (Exception ex)
@@ -683,7 +705,7 @@ namespace TremauxLock
                 {
                     case VaultState.Empty:
                         lblTitle.Text = "Cofre pronto";
-                        lblSubtitle.Text = "Adicione arquivos na pasta private.";
+                        lblSubtitle.Text = "Adicione arquivos à pasta private.";
                         ApplyStatusBadge("Pronto", AppTheme.HackerCyan, Color.FromArgb(11, 42, 50), Color.FromArgb(68, 184, 210));
                         lblPathCaption.Text = "Pasta de trabalho";
                         txtPath.Text = overview.WorkingFolderPath;
@@ -697,7 +719,7 @@ namespace TremauxLock
 
                     case VaultState.Unlocked:
                         lblTitle.Text = "Cofre aberto";
-                        lblSubtitle.Text = "Os arquivos estao visiveis no Windows. Bloqueie quando terminar para proteger o conteudo.";
+                        lblSubtitle.Text = "Os arquivos estão visíveis no Windows. Bloqueie quando terminar para proteger o conteúdo.";
                         ApplyStatusBadge("Aberto", AppTheme.HackerGreen, Color.FromArgb(13, 48, 34), Color.FromArgb(67, 190, 128));
                         lblPathCaption.Text = "Pasta de trabalho";
                         txtPath.Text = overview.WorkingFolderPath;
@@ -709,7 +731,7 @@ namespace TremauxLock
 
                     case VaultState.Locked:
                         lblTitle.Text = "Cofre protegido";
-                        lblSubtitle.Text = "O conteudo esta criptografado. Use a senha ou a chave de recuperacao para restaurar.";
+                        lblSubtitle.Text = "O conteúdo está criptografado. Use a senha ou a chave de recuperação para restaurar.";
                         if (cooldownActive)
                         {
                             int seconds = Math.Max(1, (int)Math.Ceiling((unlockCooldownUntilUtc - DateTime.UtcNow).TotalSeconds));
@@ -720,7 +742,7 @@ namespace TremauxLock
                             ApplyStatusBadge("Protegido", AppTheme.HackerYellow, Color.FromArgb(52, 40, 13), Color.FromArgb(190, 150, 48));
                         }
 
-                        lblPathCaption.Text = "Pasta da aplicacao";
+                        lblPathCaption.Text = "Pasta da aplicação";
                         txtPath.Text = vaultService.ApplicationDirectory;
                         btnFolder.Text = "Abrir pasta";
                         btnMain.Text = cooldownActive ? "Aguarde..." : "Desbloquear";
@@ -731,10 +753,10 @@ namespace TremauxLock
                         break;
 
                     default:
-                        lblTitle.Text = "Revisao necessaria";
-                        lblSubtitle.Text = "As pastas do cofre estao em conflito. Confira private, private.locked e private.vault.json.";
+                        lblTitle.Text = "Revisão necessária";
+                        lblSubtitle.Text = "As pastas do cofre estão em conflito. Confira private, private.locked e private.vault.json.";
                         ApplyStatusBadge("Revisar", AppTheme.HackerRed, Color.FromArgb(58, 24, 32), Color.FromArgb(205, 80, 96));
-                        lblPathCaption.Text = "Diretorio";
+                        lblPathCaption.Text = "Diretório";
                         txtPath.Text = vaultService.ApplicationDirectory;
                         btnFolder.Text = "Abrir pasta";
                         btnMain.Text = "Atualizar";
@@ -780,13 +802,14 @@ namespace TremauxLock
                 foreach (string file in files)
                 {
                     string relativePath = Path.GetRelativePath(vaultService.WorkingFolderPath, file);
-                    long size = new FileInfo(file).Length;
-                    lstFiles.Items.Add($"{relativePath}   |   {VaultCrypto.FormatSize(size)}");
+                    long? size = VaultCrypto.TryGetFileSize(file);
+                    string sizeText = size.HasValue ? VaultCrypto.FormatSize(size.Value) : "?";
+                    lstFiles.Items.Add($"{relativePath}   |   {sizeText}");
                 }
 
                 if (allFiles.Length > files.Length)
                 {
-                    lstFiles.Items.Add($"... e mais {allFiles.Length - files.Length} arquivo(s)");
+                    lstFiles.Items.Add($"… e mais {allFiles.Length - files.Length} arquivo(s)");
                 }
 
                 bool hasFiles = lstFiles.Items.Count > 0;
@@ -912,6 +935,54 @@ namespace TremauxLock
             ApplyOverviewToUi();
         }
 
+        private void ShowRecoveryNoticeIfNeeded()
+        {
+            if (recoveryNoticeShown || string.IsNullOrWhiteSpace(vaultService.RecoveryNotice))
+            {
+                return;
+            }
+
+            recoveryNoticeShown = true;
+            bool isWarning = vaultService.RecoveryNotice.Contains("não foi possível", StringComparison.OrdinalIgnoreCase)
+                || vaultService.RecoveryNotice.Contains("conflito", StringComparison.OrdinalIgnoreCase);
+            MessageBox.Show(
+                vaultService.RecoveryNotice,
+                "TremauxLock — recuperação automática",
+                MessageBoxButtons.OK,
+                isWarning ? MessageBoxIcon.Warning : MessageBoxIcon.Information);
+        }
+
+        private void MainForm_KeyDown(object? sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.F5 && !isBusy)
+            {
+                RefreshOverview();
+                e.Handled = true;
+            }
+            else if (e.Control && e.KeyCode == Keys.O && !isBusy)
+            {
+                OpenRelevantFolder();
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+            }
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            if (isBusy)
+            {
+                e.Cancel = true;
+                MessageBox.Show(
+                    "Aguarde a operação atual terminar antes de fechar o aplicativo.",
+                    "TremauxLock",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
+
+            base.OnFormClosing(e);
+        }
+
         private void OpenRelevantFolder()
         {
             string path = currentOverview?.State switch
@@ -930,7 +1001,7 @@ namespace TremauxLock
             {
                 if (!Directory.Exists(path) && !File.Exists(path))
                 {
-                    MessageBox.Show($"O caminho nao existe: {path}", "TremauxLock", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show($"O caminho não existe: {path}", "TremauxLock", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 

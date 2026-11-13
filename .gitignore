@@ -1,6 +1,12 @@
 bin/
 obj/
 dist/
+publish/
+.vs/
+TestResults/
+*.trx
+*.coverage
+coverage*.xml
 private/
 private.locked/
 private.pending/
